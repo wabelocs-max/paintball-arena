@@ -374,7 +374,7 @@ function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
   rp.name=String(pr.n||'Teman').slice(0,14);const ci=clamp(pr.c|0,0,7);rp.team=teamCount>0?Math.min(ci,teamCount-1):-1;rp.col=COLORS[rp.team>=0?rp.team:ci];
   rp.tx=num(pr.x,0,W,rp.tx||W/2);rp.ty=num(pr.y,0,H,rp.ty||H/2);rp.tang=num(pr.a,-7,7,0);
   {const now=performance.now(),ts=num(pr.ts,0,1e12,null);
-   if(ts===null||ts!==rp.lastTs){rp.lastTs=ts;let st=now;
+   if(ts===null||ts!==rp.lastTs){rp.lastTs=ts;rp.lastRx=performance.now();let st=now;
     if(ts!==null){const o=now-ts;if(rp.off===undefined||o<rp.off)rp.off=o;else rp.off+=(o-rp.off)*.01;st=ts+rp.off}
     const b=rp.buf||(rp.buf=[]),lb=b[b.length-1];
     if(lb&&Math.hypot(lb.x-rp.tx,lb.y-rp.ty)>140)b.length=0;else if(lb&&st<=lb.t)st=lb.t+1;
@@ -406,9 +406,9 @@ function newRound(r){round=r;hitBy.clear();roundEndT=0;roundWinner=null;pctx.cle
 function computeScores(){for(const p of players)p.score=0;
  const credit=(list,victim)=>{let d=0;for(const [pe,c] of list){const n=clamp(c|0,0,999);d+=n;const s=pe===myPeer?me:remotes.get(pe);if(s)s.score+=n}victim.deaths=d};
  credit([...hitBy],me);for(const rp of remotes.values()){if(rp.r===round)credit(rp.h,rp);else rp.deaths=0}}
-function publish(force){if(!net||mode!=='online'||!me)return;const t=performance.now();if(!force&&t-lastPub<50)return;lastPub=t;
+function publish(force){if(!net||mode!=='online'||!me)return;const t=performance.now();if(!force&&t-lastPub<100)return;lastPub=t;
  const auth=myPeer!==null&&authority()===myPeer;
- net.presence({pu:auth?pups.slice(0,4):[],pk:myPicks,f:fxBits(me),ts:Math.round(performance.now()),pv:isPrivate?1:0,k:myClaims,n:nick,c:myColor,tc:teamCount,mx:maxPlayers,jt:joinT,cr:isCreator?1:0,x:Math.round(me.x),y:Math.round(me.y),a:+me.ang.toFixed(2),d:me.dead>0?1:0,v:me.inv>0?1:0,r:round,s:myShots,h:[...hitBy]}).catch(()=>{})}
+ net.presence({pu:auth?pups.slice(0,4):[],pk:myPicks,s:myShots.filter(q=>t-q.t<350).map(q=>({i:q.i,x:q.x,y:q.y,a:q.a})),f:fxBits(me),ts:Math.round(performance.now()),pv:isPrivate?1:0,k:myClaims,n:nick,c:myColor,tc:teamCount,mx:maxPlayers,jt:joinT,cr:isCreator?1:0,x:Math.round(me.x),y:Math.round(me.y),a:+me.ang.toFixed(2),d:me.dead>0?1:0,v:me.inv>0?1:0,r:round,h:[...hitBy]}).catch(()=>{})}
 async function joinRoom(code,asHost){code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,4);
  if(code.length!==4){netMsg('Kode room harus 4 huruf/angka.','bad');return}
  if(!room){netMsg('Mode online belum tersambung.','bad');return}
@@ -456,10 +456,10 @@ function updRoomInfo(){const n=1+remotes.size,c=$('rbInfo').dataset.c!=='0';
    Server-relayed, so it works behind mobile carrier NAT, and a room survives its creator leaving.
    Same shape as the claude.ai room: join -> presence/onPeers/onConnection/leave. */
 let netKind='none';
-const BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
+const BROKERS=[{u:'wss://broker.emqx.io:8084/mqtt',v:5},{u:'wss://broker.hivemq.com:8884/mqtt',v:5},{u:'wss://broker.emqx.io:8084/mqtt',v:4}];
 function relayNs(){const LT='pbarena/v2/lobby/',rooms=new Map(),hs=[];let lc=null,emitT=null;
  const emit=()=>{if(emitT)return;emitT=setTimeout(()=>{emitT=null;const list=[...rooms.values()].map(r=>r.v);for(const h of hs)h(list)},250)};
- const go=bi=>{if(bi>=BROKERS.length)return;let c;try{c=mqtt.connect(BROKERS[bi],{clientId:'pbl_'+Math.random().toString(36).slice(2,10),clean:true,keepalive:30,reconnectPeriod:3000,connectTimeout:8000})}catch(e){go(bi+1);return}
+ const go=bi=>{if(bi>=BROKERS.length)return;let c;try{c=mqtt.connect(BROKERS[bi].u,{protocolVersion:BROKERS[bi].v,clientId:'pbl_'+Math.random().toString(36).slice(2,10),clean:true,keepalive:30,reconnectPeriod:3000,connectTimeout:8000})}catch(e){go(bi+1);return}
   let ok=false;const t=setTimeout(()=>{if(!ok){try{c.end(true)}catch(e){}go(bi+1)}},9000);lc=c;
   c.on('connect',()=>{ok=true;clearTimeout(t);c.subscribe(LT+'+',{qos:0})});
   c.on('message',(topic,buf)=>{const code=topic.slice(LT.length);if(!/^[a-z0-9]{4}$/.test(code))return;let txt='';try{txt=typeof buf==='string'?buf:new TextDecoder().decode(buf)}catch(e){txt=String(buf)}
@@ -482,26 +482,34 @@ function relayJoin(code){return new Promise((res,rej)=>{
  const setConn=c=>{if(c===connected)return;connected=c;for(const h of hConn)h(c)};
  const tick=setInterval(()=>{const t=Date.now();for(const [k,at] of seenAt)if(t-at>6000){seenAt.delete(k);pres.delete(k);dirty=true}
   if(dirty){dirty=false;notify()}},50);
- const send=()=>{sendTimer=null;if(!client||!connected||closed)return;lastSend=Date.now();try{client.publish(base+id,JSON.stringify(mine),{qos:0})}catch(e){}};
+ let lastSent={},lastFull=0;
+ const send=()=>{sendTimer=null;if(!client||!connected||closed)return;const now=Date.now();let msg;
+  if(now-lastFull>1000){msg=Object.assign({},mine,{_f:1});lastFull=now;lastSent={};for(const k in mine)lastSent[k]=JSON.stringify(mine[k])}
+  else{msg={};let n=0;for(const k in mine){const j=JSON.stringify(mine[k]);if(lastSent[k]!==j){msg[k]=mine[k];lastSent[k]=j;n++}}
+   for(const k in lastSent)if(!(k in mine)){msg[k]=null;delete lastSent[k];n++}if(!n)return}
+  lastSend=now;try{client.publish(base+id,JSON.stringify(msg),{qos:0})}catch(e){}};
  const keepAlive=setInterval(()=>{if(Date.now()-lastSend>1500)send()},1000);
  const api={name:code,selfId:()=>id,peers:snap,connected:()=>connected,
   presence:async p=>{for(const k in p){if(p[k]===null)delete mine[k];else mine[k]=p[k]}
-   const wait=70-(Date.now()-lastSend);if(wait<=0){if(sendTimer){clearTimeout(sendTimer);sendTimer=null}send()}else if(!sendTimer)sendTimer=setTimeout(send,wait)},
+   const wait=100-(Date.now()-lastSend);if(wait<=0){if(sendTimer){clearTimeout(sendTimer);sendTimer=null}send()}else if(!sendTimer)sendTimer=setTimeout(send,wait)},
   onPeers:h=>{hPeers.push(h);setTimeout(notify,0);return()=>{const i=hPeers.indexOf(h);if(i>=0)hPeers.splice(i,1)}},
   onConnection:h=>{hConn.push(h);setTimeout(()=>h(connected),0);return()=>{const i=hConn.indexOf(h);if(i>=0)hConn.splice(i,1)}},
   leave:async()=>{if(closed)return;closed=true;clearInterval(tick);clearInterval(keepAlive);if(sendTimer)clearTimeout(sendTimer);
    try{client.publish(base+id,'',{qos:0})}catch(e){}await new Promise(r=>setTimeout(r,150));try{client.end(true)}catch(e){}}};
  const fail=c=>{if(done)return;done=true;closed=true;clearInterval(tick);clearInterval(keepAlive);try{client&&client.end(true)}catch(e){}rej({code:c})};
- const attempt=()=>{if(done)return;if(bi>=BROKERS.length){fail('timeout');return}const url=BROKERS[bi++];
-  try{client=mqtt.connect(url,{clientId:'pb_'+id,clean:true,keepalive:20,reconnectPeriod:2000,connectTimeout:8000,
+ const attempt=()=>{if(done)return;if(bi>=BROKERS.length){fail('timeout');return}const br=BROKERS[bi++],url=br.u;
+  try{client=mqtt.connect(url,{protocolVersion:br.v,clientId:'pb_'+id,clean:true,keepalive:20,reconnectPeriod:2000,connectTimeout:8000,
     will:{topic:base+id,payload:'',qos:0,retain:false}})}catch(e){attempt();return}
   const c=client;clearTimeout(to);to=setTimeout(()=>{if(!done&&client===c){try{c.end(true)}catch(e){}attempt()}},9000);
-  c.on('connect',()=>{if(client!==c)return;c.subscribe(base+'+',{qos:0},err=>{if(err){if(!done){try{c.end(true)}catch(e){}attempt()}return}
+  c.on('connect',()=>{if(client!==c)return;c.subscribe(base+'+',br.v===5?{qos:0,nl:true}:{qos:0},err=>{if(err){if(!done){try{c.end(true)}catch(e){}attempt()}return}
     setConn(true);send();if(!done){done=true;clearTimeout(to);res(api)}})});
   c.on('message',(topic,buf)=>{if(client!==c||closed)return;const pid=topic.slice(base.length);if(!pid||pid===id||pid.length>24)return;
    let txt='';try{txt=typeof buf==='string'?buf:new TextDecoder().decode(buf)}catch(e){txt=String(buf)}if(!txt){if(pres.delete(pid)){seenAt.delete(pid);dirty=true}return}
    if(txt.length>4096||pres.size>=16&&!pres.has(pid))return;
-   try{const v=JSON.parse(txt);if(v&&typeof v==='object'&&!Array.isArray(v)){pres.set(pid,v);seenAt.set(pid,Date.now());dirty=true}}catch(e){}});
+   try{const v=JSON.parse(txt);if(!v||typeof v!=='object'||Array.isArray(v))return;seenAt.set(pid,Date.now());
+    if(v._f===1){delete v._f;if(!pres.has(pid)){lastFull=0;if(!sendTimer)sendTimer=setTimeout(send,30)}pres.set(pid,v)}
+    else{const o=pres.get(pid);if(!o){lastFull=0;if(!sendTimer)sendTimer=setTimeout(send,30);return}const nv=Object.assign({},o);for(const k in v){if(v[k]===null)delete nv[k];else nv[k]=v[k]}pres.set(pid,nv)}
+    dirty=true}catch(e){}});
   c.on('offline',()=>{if(client===c)setConn(false)});c.on('close',()=>{if(client===c)setConn(false)});
   c.on('reconnect',()=>{});c.on('error',()=>{})};
  attempt();
@@ -539,7 +547,7 @@ function update(dt,menu){if(mode==='local')timeLeft-=dt;
  const frozen=menu||(mode==='online'&&roundEndT>0);
  for(const p of players){
   if(p.remote){const now=performance.now();p.dead=(p.nd||now-(p.optT||-1e9)<1200)?1:0;
-   const b=p.buf;if(b&&b.length){const rt=now-150;let x,y,a;
+   const b=p.buf;if(b&&b.length){const rt=now-190;let x,y,a;
     if(rt<=b[0].t||b.length===1){x=b[0].x;y=b[0].y;a=b[0].a;if(b.length===1){const l=b[0];x=l.x;y=l.y;a=l.a}}
     else{let i=b.length-2;while(i>0&&b[i].t>rt)i--;const s0=b[i],s1=b[i+1];
      if(rt<=s1.t){const k=(rt-s0.t)/Math.max(1,s1.t-s0.t);x=s0.x+(s1.x-s0.x)*k;y=s0.y+(s1.y-s0.y)*k;a=s0.a+angDiff(s0.a,s1.a)*k}
@@ -554,8 +562,8 @@ function update(dt,menu){if(mode==='local')timeLeft-=dt;
   if(inp.fire&&p.cool<=0&&(p.ammo>=1||rap)){p.cool=COOL*(rap?.4:1);if(!rap)p.ammo--;p.reload=.5;const a0=p.ang+(Math.random()-.5)*.06;
    for(const a of p.fx.spr>0?[a0-.2,a0,a0+.2]:[a0]){const bx=p.x+Math.cos(a)*(R+6),by=p.y+Math.sin(a)*(R+6);
     balls.push({x:bx,y:by,vx:Math.cos(a)*BSPD,vy:Math.sin(a)*BSPD,o:p,life:1.4/GS});
-    if(mode==='online')myShots.push({i:++mySeq,x:Math.round(bx),y:Math.round(by),a:+a.toFixed(3)})}
-   sfx(900,300,.06,.04);if(mode==='online'){if(myShots.length>18)myShots.splice(0,myShots.length-18);publish(true)}}
+    if(mode==='online')myShots.push({i:++mySeq,x:Math.round(bx),y:Math.round(by),a:+a.toFixed(2),t:performance.now()})}
+   sfx(900,300,.06,.04);if(mode==='online'){if(myShots.length>12)myShots.splice(0,myShots.length-12);publish(true)}}
   if(!inp.fire||p.ammo<1){p.reload-=dt;if(p.reload<=0)p.ammo=Math.min(MAXAMMO,p.ammo+dt*9*GS)}}
  for(let i=0;i<players.length;i++)for(let j=i+1;j<players.length;j++){const a=players[i],b=players[j];if(a.dead||b.dead||(a.remote&&b.remote))continue;
   const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d>0&&d<R*2){const k=(R*2-d)/(a.remote||b.remote?1:2);
@@ -635,7 +643,7 @@ function renderHud(){
  const sig=mode+'|'+list.map(p=>p.name+p.col+p.score).join('|');if(sig===hudSig){updTimer();return}hudSig=sig;
  hud.innerHTML=list.map(p=>`<div class="chip${p===me&&mode==='online'?' me':''}"><i style="background:${esc(p.col)}"></i>${esc(p===me&&mode==='online'?p.name+' (kamu)':p.name)}<b>${p.score|0}</b></div>`).join('')+`<div class="timer" id="tm"></div>`;lastTimeTxt='';updTimer()}
 function updTimer(){const el=$('tm');if(!el)return;let s;
- if(mode==='online')s='Ronde '+(round+1);else{const t=Math.max(0,Math.ceil(timeLeft));s=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
+ if(mode==='online'){s='Ronde '+(round+1);const now=performance.now();let gap=0;for(const rp of remotes.values())gap=Math.max(gap,now-(rp.lastRx||now));if(gap>700)s+=' · sinyal lemah'}else{const t=Math.max(0,Math.ceil(timeLeft));s=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
  if(s!==lastTimeTxt){lastTimeTxt=s;el.textContent=s}}
 function show(id){for(const k of ['lobby','pause','end'])$(k).hidden=k!==id;setTimeout(()=>{try{syncTouch()}catch(_){}},0)}
 function togglePause(){if(state==='play'){state='pause';

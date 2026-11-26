@@ -40,6 +40,8 @@ Saat online, pemain memakai WASD atau panah.
 
 ## Catatan online
 
+- Hemat data: sekitar 1 KB/s kirim dan 3 KB/s terima per pemain untuk room 4 orang (kira-kira 15 MB per jam). Kalau tulisan **sinyal lemah** muncul di pojok atas, ada pemain yang koneksinya tersendat.
+
 - Kena atau tidaknya tembakan ditentukan di layar **penembak**: kalau peluru terlihat mengenai lawan di layarmu, lawan kalah. Lawan yang baru muncul kembali kebal 1,5 detik (berkedip), dan perisai menahan satu tembakan; keduanya ditandai tulisan di atas pemain.
 
 - Pembuat room menentukan **maks pemain**: 2, 4, 6, atau 8 (selalu genap, dan habis dibagi jumlah tim). Pemain yang datang setelah room penuh akan diberi tahu dan kembali ke lobi.
