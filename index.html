@@ -373,9 +373,14 @@ function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
   if(!rp){rp=newPlayer({remote:true,peer:pe.peer,lastSeq:-1,lastClaim:-1,claimT:0});remotes.set(pe.peer,rp);fresh=true}
   rp.name=String(pr.n||'Teman').slice(0,14);const ci=clamp(pr.c|0,0,7);rp.team=teamCount>0?Math.min(ci,teamCount-1):-1;rp.col=COLORS[rp.team>=0?rp.team:ci];
   rp.tx=num(pr.x,0,W,rp.tx||W/2);rp.ty=num(pr.y,0,H,rp.ty||H/2);rp.tang=num(pr.a,-7,7,0);
-  if(fresh){rp.x=rp.tx;rp.y=rp.ty}
-  rp.jt=num(pr.jt,0,1e15,0);const prevDead=rp.dead;rp.dead=pr.d?1:0;
-  if(!fresh&&!prevDead&&rp.dead&&performance.now()-rp.claimT<2000){floatText(rp.x,rp.y-34,'KENA! +1',me.col);sfx(700,1100,.12,.06,'triangle')}rp.inv=pr.v?1:0;rp.r=num(pr.r,0,1e6,0);rp.fb=num(pr.f,0,15,0)|0;
+  {const now=performance.now(),ts=num(pr.ts,0,1e12,null);
+   if(ts===null||ts!==rp.lastTs){rp.lastTs=ts;let st=now;
+    if(ts!==null){const o=now-ts;if(rp.off===undefined||o<rp.off)rp.off=o;else rp.off+=(o-rp.off)*.01;st=ts+rp.off}
+    const b=rp.buf||(rp.buf=[]),lb=b[b.length-1];
+    if(lb&&Math.hypot(lb.x-rp.tx,lb.y-rp.ty)>140)b.length=0;else if(lb&&st<=lb.t)st=lb.t+1;
+    b.push({t:st,x:rp.tx,y:rp.ty,a:rp.tang});while(b.length>24||b.length>2&&b[1].t<now-1000)b.shift()}}
+  if(fresh){rp.x=rp.tx;rp.y=rp.ty;rp.ang=rp.tang}
+  rp.jt=num(pr.jt,0,1e15,0);rp.nd=pr.d?1:0;if(fresh)rp.dead=rp.nd;rp.inv=pr.v?1:0;rp.r=num(pr.r,0,1e6,0);rp.fb=num(pr.f,0,15,0)|0;
   rp.pk=Array.isArray(pr.pk)?pr.pk.slice(-8).filter(x=>typeof x==='string').map(x=>x.slice(0,24)):[];
   rp.pu=Array.isArray(pr.pu)?pr.pu.slice(0,4).filter(u=>u&&typeof u.id==='string').map(u=>({id:u.id.slice(0,24),k:clamp(u.k|0,0,PU.length-1),x:num(u.x,0,W,W/2),y:num(u.y,0,H,H/2)})):[];
   rp.h=Array.isArray(pr.h)?pr.h.slice(0,16).filter(e=>Array.isArray(e)&&typeof e[0]==='string'&&typeof e[1]==='number'):[];
@@ -403,7 +408,7 @@ function computeScores(){for(const p of players)p.score=0;
  credit([...hitBy],me);for(const rp of remotes.values()){if(rp.r===round)credit(rp.h,rp);else rp.deaths=0}}
 function publish(force){if(!net||mode!=='online'||!me)return;const t=performance.now();if(!force&&t-lastPub<50)return;lastPub=t;
  const auth=myPeer!==null&&authority()===myPeer;
- net.presence({pu:auth?pups.slice(0,4):[],pk:myPicks,f:fxBits(me),pv:isPrivate?1:0,k:myClaims,n:nick,c:myColor,tc:teamCount,mx:maxPlayers,jt:joinT,cr:isCreator?1:0,x:Math.round(me.x),y:Math.round(me.y),a:+me.ang.toFixed(2),d:me.dead>0?1:0,v:me.inv>0?1:0,r:round,s:myShots,h:[...hitBy]}).catch(()=>{})}
+ net.presence({pu:auth?pups.slice(0,4):[],pk:myPicks,f:fxBits(me),ts:Math.round(performance.now()),pv:isPrivate?1:0,k:myClaims,n:nick,c:myColor,tc:teamCount,mx:maxPlayers,jt:joinT,cr:isCreator?1:0,x:Math.round(me.x),y:Math.round(me.y),a:+me.ang.toFixed(2),d:me.dead>0?1:0,v:me.inv>0?1:0,r:round,s:myShots,h:[...hitBy]}).catch(()=>{})}
 async function joinRoom(code,asHost){code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,4);
  if(code.length!==4){netMsg('Kode room harus 4 huruf/angka.','bad');return}
  if(!room){netMsg('Mode online belum tersambung.','bad');return}
@@ -533,7 +538,14 @@ function collide(p){p.x=clamp(p.x,R,W-R);p.y=clamp(p.y,R,H-R);
 function update(dt,menu){if(mode==='local')timeLeft-=dt;
  const frozen=menu||(mode==='online'&&roundEndT>0);
  for(const p of players){
-  if(p.remote){const k=Math.min(1,dt*14);p.x+=(p.tx-p.x)*k;p.y+=(p.ty-p.y)*k;p.ang+=angDiff(p.ang,p.tang)*k;continue}
+  if(p.remote){const now=performance.now();p.dead=(p.nd||now-(p.optT||-1e9)<1200)?1:0;
+   const b=p.buf;if(b&&b.length){const rt=now-150;let x,y,a;
+    if(rt<=b[0].t||b.length===1){x=b[0].x;y=b[0].y;a=b[0].a;if(b.length===1){const l=b[0];x=l.x;y=l.y;a=l.a}}
+    else{let i=b.length-2;while(i>0&&b[i].t>rt)i--;const s0=b[i],s1=b[i+1];
+     if(rt<=s1.t){const k=(rt-s0.t)/Math.max(1,s1.t-s0.t);x=s0.x+(s1.x-s0.x)*k;y=s0.y+(s1.y-s0.y)*k;a=s0.a+angDiff(s0.a,s1.a)*k}
+     else{const e=Math.min(rt-s1.t,150)/Math.max(1,s1.t-s0.t);x=s1.x+(s1.x-s0.x)*e;y=s1.y+(s1.y-s0.y)*e;a=s1.a}}
+    const k=Math.min(1,dt*30);p.x+=(clamp(x,R,W-R)-p.x)*k;p.y+=(clamp(y,R,H-R)-p.y)*k;p.ang+=angDiff(p.ang,a)*k}
+   continue}
   if(p.dead>0){p.dead-=dt;if(p.dead<=0)spawn(p);continue}
   p.inv=Math.max(0,p.inv-dt);p.cool-=dt;for(const k in p.fx)p.fx[k]=Math.max(0,p.fx[k]-dt);
   let inp=p.bot?botInput(p,dt):humanInput(p);if(frozen)inp={mx:0,my:0,fire:false};const ox=p.x,oy=p.y;
@@ -555,7 +567,8 @@ function update(dt,menu){if(mode==='local')timeLeft-=dt;
      const sp=Math.hypot(b.vx,b.vy);splat(p.x,p.y,b.o.col,10,b.vx/sp,b.vy/sp);burst(p.x,p.y,b.o.col,10);
      if(p.remote){sfx(500,400,.05,.03);
       if(b.o===me&&!(roundEndT>0)){if(p.inv>0)floatText(p.x,p.y-34,'Kebal','#f2efe8');else if(p.fb&4)floatText(p.x,p.y-34,'Perisai!','#f2efe8');
-       if(p.inv<=0){myClaims.push({i:++claimSeq,v:p.peer});if(myClaims.length>8)myClaims.shift();p.claimT=performance.now();publish(true)}}}
+       if(p.inv<=0){myClaims.push({i:++claimSeq,v:p.peer});if(myClaims.length>8)myClaims.shift();p.claimT=performance.now();publish(true);
+        if(!(p.fb&4)&&!p.nd){p.optT=performance.now();p.dead=1;shake=.12;splat(p.x,p.y,me.col,18,b.vx/sp,b.vy/sp);burst(p.x,p.y,me.col,26);floatText(p.x,p.y-34,'KENA! +1',me.col);sfx(220,60,.25,.12,'sawtooth')}}}}
      else if(mode==='online'&&b.o.remote){sfx(500,400,.05,.03)}
      else if(p.inv>0||(mode==='online'&&roundEndT>0)){sfx(500,400,.05,.03);if(mode==='local'&&b.o!==p)floatText(p.x,p.y-34,'Kebal','#f2efe8')}
      else if(p.fx.shd>0){p.fx.shd=0;p.inv=.4;burst(p.x,p.y,'#f2efe8',20);floatText(p.x,p.y-34,'Perisai pecah!','#f2efe8');sfx(1300,500,.18,.07,'triangle');if(mode==='online')publish(true)}
