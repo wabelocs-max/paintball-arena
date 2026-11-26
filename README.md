@@ -7,7 +7,7 @@ Game tembak-tembakan cat dari atas (top-down) yang jalan langsung di browser.
 ## Mode
 
 - **Main lokal**: 2–4 pemain di satu keyboard/gamepad, slot kosong bisa diisi bot.
-- **Main online**: buat room, kirim kode 4 huruf atau tautan undangan ke teman. Semua pemain tersambung lewat server relay publik (MQTT over WebSocket di `broker.emqx.io`, cadangan `broker.hivemq.com`), jadi bisa main dari data seluler maupun wifi. Room tetap ada selama masih ada pemain di dalamnya.
+- **Main online**: buat room, lalu teman memilihnya dari daftar **Pilih room yang sedang main**, atau masuk lewat kode 4 huruf / tautan undangan. Centang **Room privat** kalau room tidak ingin tampil di daftar. Semua pemain tersambung lewat server relay publik (MQTT over WebSocket di `broker.emqx.io`, cadangan `broker.hivemq.com`), jadi bisa main dari data seluler maupun wifi. Room tetap ada selama masih ada pemain di dalamnya.
 - **Tim**: Bebas (sendiri-sendiri), 2, 3, atau 4 tim. Tiap tim punya warna sendiri, peluru teman setim tidak melukai, skor dihitung per tim.
 
 ## Power-up
@@ -39,6 +39,8 @@ Saat online, pemain memakai WASD atau panah.
 **HP/tablet:** centang "Tampilkan tombol layar sentuh" di lobi (otomatis menyala di layar sentuh). Joystick kiri untuk jalan dan membidik, tombol Tembak di kanan. Saat main, game mengisi seluruh layar; dengan HP dimiringkan (landscape) tombol menumpang di atas arena. Di Android, game otomatis masuk layar penuh.
 
 ## Catatan online
+
+- Kena atau tidaknya tembakan ditentukan di layar **penembak**: kalau peluru terlihat mengenai lawan di layarmu, lawan kalah. Lawan yang baru muncul kembali kebal 1,5 detik (berkedip), dan perisai menahan satu tembakan; keduanya ditandai tulisan di atas pemain.
 
 - Pembuat room menentukan **maks pemain**: 2, 4, 6, atau 8 (selalu genap, dan habis dibagi jumlah tim). Pemain yang datang setelah room penuh akan diberi tahu dan kembali ke lobi.
 - Pemain yang bergabung otomatis masuk ke tim yang anggotanya paling sedikit. Tombol **Ganti tim** hanya memindahkan ke tim yang belum penuh.
