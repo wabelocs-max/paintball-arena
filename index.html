@@ -182,7 +182,7 @@ body.pt .touchbar{margin-top:8px;flex:none}
       <div class="card" style="width:min(420px,100%);text-align:center">
         <h2 id="pauseTitle">Jeda</h2><p id="pauseText">Tarik napas dulu.</p>
         <p id="pauseRoom" hidden style="margin:-6px 0 14px">Kode room <b id="pauseCode" style="font:400 20px Bungee,sans-serif;letter-spacing:2px;color:var(--ink)"></b></p>
-        <div class="row" style="justify-content:center;margin-bottom:10px"><button id="pauseLink" hidden>Salin tautan undangan</button></div>
+        <div class="row" style="justify-content:center;margin-bottom:10px"><button id="pauseLink" hidden>Salin tautan undangan</button><button id="pauseTeam" hidden>Ganti tim</button></div>
         <div class="row" style="justify-content:center"><button class="go" id="resume">Lanjut</button><button id="quit">Ke lobi</button></div>
       </div>
     </div>
@@ -362,7 +362,12 @@ function setOnlineTeams(n){n=n===1?0:clamp(n|0,0,4);const changed=n!==teamCount;
  if(n>0&&myColor>=n)pendingPick=true;
  if(me){me.team=n>0?myColor:-1;me.col=COLORS[myColor]}
  updTeamBtn();if(changed){hudSig='';renderHud()}publish(true)}
-function updTeamBtn(){const b=$('teamBtn');b.hidden=!(mode==='online'&&teamCount>0);if(!b.hidden)b.textContent='Tim '+NAMES[myColor]+' · ganti'}
+let teamBtnSig='',roundStartAt=0;
+function canSwitchTeam(){return mode==='online'&&teamCount>0&&roundEndT>0}
+function updTeamBtn(){const show=mode==='online'&&teamCount>0,ok=canSwitchTeam();
+ const txt=ok?'Tim '+NAMES[myColor]+' · ganti tim':'Tim '+NAMES[myColor]+' · ganti tim saat jeda ronde';
+ const sig=show+'|'+ok+'|'+txt;if(sig===teamBtnSig)return;teamBtnSig=sig;
+ for(const id of ['teamBtn','pauseTeam']){const b=$(id);b.hidden=!show;b.disabled=!ok;b.textContent=txt}}
 function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
  if(!isCreator&&!adoptedCr){let src=null;for(const pe of ch.peers){if(pe.sameTab)continue;const pr=pe.presence||{};if(typeof pr.tc!=='number')continue;
    if(pr.cr===1){src=pr;adoptedCr=true;break}if(!src&&!adopted)src=pr}
@@ -371,7 +376,9 @@ function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
   const pr=pe.presence||{};if(typeof pr.x!=='number')continue;seen.add(pe.peer);
   let rp=remotes.get(pe.peer),fresh=false;
   if(!rp){rp=newPlayer({remote:true,peer:pe.peer,lastSeq:-1,lastClaim:-1,claimT:0});remotes.set(pe.peer,rp);fresh=true}
-  rp.name=String(pr.n||'Teman').slice(0,14);const ci=clamp(pr.c|0,0,7);rp.team=teamCount>0?Math.min(ci,teamCount-1):-1;rp.col=COLORS[rp.team>=0?rp.team:ci];
+  rp.name=String(pr.n||'Teman').slice(0,14);let ci=clamp(pr.c|0,0,7);{const now=performance.now();if(fresh)rp.firstSeen=now;
+   const may=fresh||rp.ci===undefined||now-(rp.firstSeen||0)<6000||roundEndT>0||now-roundStartAt<1500;if(may)rp.ci=ci;else ci=rp.ci}
+  rp.team=teamCount>0?Math.min(ci,teamCount-1):-1;rp.col=COLORS[rp.team>=0?rp.team:ci];
   rp.tx=num(pr.x,0,W,rp.tx||W/2);rp.ty=num(pr.y,0,H,rp.ty||H/2);rp.tang=num(pr.a,-7,7,0);
   {const now=performance.now(),ts=num(pr.ts,0,1e12,null);
    if(ts===null||ts!==rp.lastTs){rp.lastTs=ts;rp.lastRx=performance.now();let st=now;
@@ -399,10 +406,14 @@ function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
   const others=[...remotes.values()];
   const all=[{jt:joinT,id:myPeer||''},...others.map(rp=>({jt:rp.jt,id:rp.peer}))].sort((a,b)=>a.jt-b.jt||(a.id<b.id?-1:1));
   if(all.findIndex(e=>e.id===(myPeer||''))>=maxPlayers){roomFull();return}}
- if(!isCreator&&!balanced&&adopted&&me&&teamCount>0&&remotes.size>0){balanced=true;pendingPick=true}
+ {const since=performance.now()-joinAt;
+  if(!isCreator&&adopted&&me&&teamCount>0&&remotes.size>0&&since>800&&since<6000&&!pendingPick){
+   const c=teamCounts(),t=myColor<teamCount?myColor:0,m=Math.min(...c);
+   const latest=[...remotes.values()].filter(r=>r.team===t).every(r=>(r.jt||0)<joinT||((r.jt||0)===joinT&&r.peer<(myPeer||'')));
+   if(c[t]>m&&latest){myColor=c.indexOf(m);me.team=myColor;me.col=COLORS[myColor];teamBtnSig='';updTeamBtn();hudSig='';publish(true)}}}
  if(pendingPick&&me){pendingPick=false;myColor=leastTeam();me.team=myColor;me.col=COLORS[myColor];updTeamBtn();hudSig='';publish(true)}
  players=[me,...remotes.values()];renderHud();updRoomInfo()}
-function newRound(r){round=r;hitBy.clear();roundEndT=0;roundWinner=null;pctx.clearRect(0,0,W,H);balls=[];pups=[];puT=4;if(me){me.deaths=0;spawn(me)}publish(true);renderHud()}
+function newRound(r){round=r;roundStartAt=performance.now();hitBy.clear();roundEndT=0;roundWinner=null;pctx.clearRect(0,0,W,H);balls=[];pups=[];puT=4;if(me){me.deaths=0;spawn(me)}publish(true);renderHud()}
 function computeScores(){for(const p of players)p.score=0;
  const credit=(list,victim)=>{let d=0;for(const [pe,c] of list){const n=clamp(c|0,0,999);d+=n;const s=pe===myPeer?me:remotes.get(pe);if(s)s.score+=n}victim.deaths=d};
  credit([...hitBy],me);for(const rp of remotes.values()){if(rp.r===round)credit(rp.h,rp);else rp.deaths=0}}
@@ -587,7 +598,7 @@ function update(dt,menu){if(mode==='local')timeLeft-=dt;
   b.life-=dt;if(gone||b.life<=0)balls.splice(i,1)}
  for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.x+=q.vx*dt;q.y+=q.vy*dt;q.vx*=.9;q.vy*=.9;q.life-=dt;if(q.life<=0)parts.splice(i,1)}
  shake=Math.max(0,shake-dt);updatePowerups(dt);
- if(mode==='online'){computeScores();renderHud();announceRoom(false);
+ if(mode==='online'){computeScores();renderHud();announceRoom(false);updTeamBtn();
   if(roundEndT>0){roundEndT-=dt;if(roundEndT<=0)newRound(round+1)}
   else if(teamCount>0){const ts=teamScores().filter(t=>t.n);const tt=ts.reduce((a,t)=>t.score>a.score?t:a,ts[0]);
    if(tt&&tt.score>=ONLINE_TARGET){roundEndT=5;roundWinner={name:tt.name+(me.team===tt.i?' (timmu)':''),col:tt.col};sfx(400,900,.4,.08,'triangle')}}
@@ -632,7 +643,7 @@ function draw(){ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake*30,
    ctx.fillText(UI>1.3?'Menunggu teman… kode room '+roomCode.toUpperCase():'Menunggu teman… kirim kode room '+roomCode.toUpperCase()+'. Sambil menunggu, latihan menembak dulu.',W/2,bh/2+7*UI)}
   if(roundEndT>0&&roundWinner){ctx.fillStyle='rgba(14,15,18,.78)';ctx.fillRect(0,H/2-80,W,160);ctx.textAlign='center';
    ctx.fillStyle=roundWinner.col;ctx.font='400 52px Bungee, sans-serif';ctx.fillText(roundWinner.name+' menang!',W/2,H/2+5);
-   ctx.fillStyle='#f2efe8';ctx.font='500 20px Rubik';ctx.fillText('Ronde baru dalam '+Math.ceil(roundEndT)+' detik',W/2,H/2+45)}}}
+   ctx.fillStyle='#f2efe8';ctx.font='500 20px Rubik';ctx.fillText('Ronde baru dalam '+Math.ceil(roundEndT)+' detik'+(teamCount>0?' · mau ganti tim? sekarang waktunya':''),W/2,H/2+45)}}}
 
 /* ---------- HUD & screens ---------- */
 const hud=$('hud');let hudSig='',lastTimeTxt='';
@@ -708,7 +719,8 @@ $('leaveBtn').onclick=leaveRoom;
 function syncTouch(){const on=touchOn&&(state==='play'||state==='pause');$('touchbar').hidden=!on;document.body.classList.toggle('pt',on);if(!on){touch.mx=0;touch.my=0;touch.fire=false}}
 function goFull(){if(!touchOn)return;const d=document,el=d.documentElement;try{if(!d.fullscreenElement&&el.requestFullscreen){const r=el.requestFullscreen({navigationUI:'hide'});
  if(r&&r.then)r.then(()=>{try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(_){}}).catch(()=>{})}}catch(_){}}
-$('teamBtn').onclick=()=>{if(!(mode==='online'&&teamCount>0&&me))return;const c=teamCounts(),cap=teamCap();let nx=-1;
+$('pauseTeam').onclick=()=>$('teamBtn').onclick();
+$('teamBtn').onclick=()=>{if(!(canSwitchTeam()&&me))return;const c=teamCounts(),cap=teamCap();let nx=-1;
  for(let k=1;k<teamCount;k++){const t=(myColor+k)%teamCount;if(c[t]<cap){nx=t;break}}
  if(nx<0){floatText(me.x,me.y-34,'Tim lain penuh','#f2efe8');return}myColor=nx;me.team=myColor;me.col=COLORS[myColor];saveProfile();spawn(me);hudSig='';updTeamBtn();renderHud();publish(true)};
 const inviteLink=()=>location.origin+location.pathname+'#room-'+roomCode;

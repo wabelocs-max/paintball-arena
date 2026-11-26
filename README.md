@@ -45,7 +45,7 @@ Saat online, pemain memakai WASD atau panah.
 - Kena atau tidaknya tembakan ditentukan di layar **penembak**: kalau peluru terlihat mengenai lawan di layarmu, lawan kalah. Lawan yang baru muncul kembali kebal 1,5 detik (berkedip), dan perisai menahan satu tembakan; keduanya ditandai tulisan di atas pemain.
 
 - Pembuat room menentukan **maks pemain**: 2, 4, 6, atau 8 (selalu genap, dan habis dibagi jumlah tim). Pemain yang datang setelah room penuh akan diberi tahu dan kembali ke lobi.
-- Pemain yang bergabung otomatis masuk ke tim yang anggotanya paling sedikit. Tombol **Ganti tim** hanya memindahkan ke tim yang belum penuh.
+- Pemain yang bergabung otomatis masuk ke tim yang anggotanya paling sedikit. Tim dan warna **terkunci selama ronde berjalan**; tombol **Ganti tim** (juga ada di Menu) hanya aktif di jeda 5 detik antar-ronde, dan hanya ke tim yang belum penuh.
 - Kalau tidak bisa tersambung: cek internet, matikan VPN atau pemblokir iklan yang memblokir WebSocket, lalu muat ulang halaman.
 - Server relay yang dipakai adalah server publik gratis: siapa pun yang tahu kode room bisa ikut masuk, dan datanya (posisi, tembakan, skor) tidak dienkripsi end-to-end. Jangan kirim data pribadi lewat game ini.
 
