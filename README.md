@@ -40,7 +40,8 @@ Saat online, pemain memakai WASD atau panah.
 
 ## Catatan online
 
-- Maksimal 16 pemain per room (paling enak 2–8).
+- Pembuat room menentukan **maks pemain**: 2, 4, 6, atau 8 (selalu genap, dan habis dibagi jumlah tim). Pemain yang datang setelah room penuh akan diberi tahu dan kembali ke lobi.
+- Pemain yang bergabung otomatis masuk ke tim yang anggotanya paling sedikit. Tombol **Ganti tim** hanya memindahkan ke tim yang belum penuh.
 - Kalau tidak bisa tersambung: cek internet, matikan VPN atau pemblokir iklan yang memblokir WebSocket, lalu muat ulang halaman.
 - Server relay yang dipakai adalah server publik gratis: siapa pun yang tahu kode room bisa ikut masuk, dan datanya (posisi, tembakan, skor) tidak dienkripsi end-to-end. Jangan kirim data pribadi lewat game ini.
 

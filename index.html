@@ -148,7 +148,8 @@ body.pt .touchbar{margin-top:8px;flex:none}
           <div class="invite" id="invite" hidden><div><b>Kamu diundang ke room <span id="inviteCode"></span></b><span>Isi nama dan pilih tim, lalu tekan Gabung.</span></div><button class="go" id="inviteBtn">Gabung</button></div>
           <h2>Main bareng teman</h2>
           <p>Buat room, lalu kirim kodenya ke teman. Pemain atau tim pertama yang dapat 15 tembakan kena memenangkan ronde, lalu ronde baru mulai otomatis.</p>
-          <div class="row" style="margin-bottom:12px"><label>Mode room baru <select id="onTeams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label></div>
+          <div class="row" style="margin-bottom:12px"><label>Mode room baru <select id="onTeams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label>
+            <label>Maks pemain <select id="onMax"><option>2</option><option selected>4</option><option>6</option><option>8</option></select></label></div>
           <div class="row">
             <label style="flex:1 1 220px">Nama <input id="nick" maxlength="14" autocomplete="off"></label>
             <div><div id="swLabel" style="color:var(--mute);font-size:14px;margin-bottom:4px">Warna</div><div class="sw" id="sw" aria-label="Warna cat"></div></div>
@@ -347,11 +348,14 @@ function botInput(p,dt){let tgt=null,td=1e9;for(const q of players)if(q!==p&&!q.
 /* ---------- online state ---------- */
 let room=null,net=null,netUnsubs=[],roomCode='',myPeer=null,me=null,round=0,mySeq=0,myShots=[],hitBy=new Map(),roundEndT=0,roundWinner=null,lastPub=0;
 const remotes=new Map();
-let pendingPick=false,nick='',myColor=0,isCreator=false,adopted=false,adoptedCr=false;
+let pendingPick=false,nick='',myColor=0,isCreator=false,adopted=false,adoptedCr=false,maxPlayers=4,joinT=0,joinAt=0,balanced=false,fullChecked=false;
+const evenMax=v=>{v=clamp(Math.round(+v||8),2,8);return v%2?v+1:v};
 try{nick=localStorage.getItem('pb-nick')||'';myColor=+localStorage.getItem('pb-col')||0}catch(e){}
 if(!nick)nick='Pemain'+Math.floor(Math.random()*90+10);myColor=clamp(myColor|0,0,7);
 
-function leastTeam(){const c=new Array(teamCount).fill(0);for(const rp of remotes.values())if(rp.team>=0&&rp.team<teamCount)c[rp.team]++;return c.indexOf(Math.min(...c))}
+function teamCounts(){const c=new Array(teamCount).fill(0);for(const rp of remotes.values())if(rp.team>=0&&rp.team<teamCount)c[rp.team]++;return c}
+function teamCap(){return teamCount>0?Math.max(1,Math.floor(maxPlayers/teamCount)):99}
+function leastTeam(){const c=teamCounts(),m=Math.min(...c);return c[myColor]===m&&myColor<teamCount?myColor:c.indexOf(m)}
 function setOnlineTeams(n){n=n===1?0:clamp(n|0,0,4);const changed=n!==teamCount;teamCount=n;
  if(n>0&&myColor>=n)pendingPick=true;
  if(me){me.team=n>0?myColor:-1;me.col=COLORS[myColor]}
@@ -360,7 +364,7 @@ function updTeamBtn(){const b=$('teamBtn');b.hidden=!(mode==='online'&&teamCount
 function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
  if(!isCreator&&!adoptedCr){let src=null;for(const pe of ch.peers){if(pe.sameTab)continue;const pr=pe.presence||{};if(typeof pr.tc!=='number')continue;
    if(pr.cr===1){src=pr;adoptedCr=true;break}if(!src&&!adopted)src=pr}
-  if(src){adopted=true;setOnlineTeams(src.tc)}}
+  if(src){adopted=true;if(typeof src.mx==='number')maxPlayers=evenMax(src.mx);setOnlineTeams(src.tc)}}
  for(const pe of ch.peers){if(pe.sameTab){myPeer=pe.peer;if(me)me.peer=myPeer;continue}
   const pr=pe.presence||{};if(typeof pr.x!=='number')continue;seen.add(pe.peer);
   let rp=remotes.get(pe.peer),fresh=false;
@@ -368,7 +372,7 @@ function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
   rp.name=String(pr.n||'Teman').slice(0,14);const ci=clamp(pr.c|0,0,7);rp.team=teamCount>0?Math.min(ci,teamCount-1):-1;rp.col=COLORS[rp.team>=0?rp.team:ci];
   rp.tx=num(pr.x,0,W,rp.tx||W/2);rp.ty=num(pr.y,0,H,rp.ty||H/2);rp.tang=num(pr.a,-7,7,0);
   if(fresh){rp.x=rp.tx;rp.y=rp.ty}
-  rp.dead=pr.d?1:0;rp.inv=pr.v?1:0;rp.r=num(pr.r,0,1e6,0);rp.fb=num(pr.f,0,15,0)|0;
+  rp.jt=num(pr.jt,0,1e15,0);rp.dead=pr.d?1:0;rp.inv=pr.v?1:0;rp.r=num(pr.r,0,1e6,0);rp.fb=num(pr.f,0,15,0)|0;
   rp.pk=Array.isArray(pr.pk)?pr.pk.slice(-8).filter(x=>typeof x==='string').map(x=>x.slice(0,24)):[];
   rp.pu=Array.isArray(pr.pu)?pr.pu.slice(0,4).filter(u=>u&&typeof u.id==='string').map(u=>({id:u.id.slice(0,24),k:clamp(u.k|0,0,PU.length-1),x:num(u.x,0,W,W/2),y:num(u.y,0,H,H/2)})):[];
   rp.h=Array.isArray(pr.h)?pr.h.slice(0,16).filter(e=>Array.isArray(e)&&typeof e[0]==='string'&&typeof e[1]==='number'):[];
@@ -379,6 +383,11 @@ function handleNetPeers(ch){if(mode!=='online')return;const seen=new Set();
     rp.lastSeq=s.i}}
   if(rp.r>round)newRound(rp.r)}
  for(const k of [...remotes.keys()])if(!seen.has(k))remotes.delete(k);
+ if(!isCreator&&me&&performance.now()-joinAt<6000){
+  const others=[...remotes.values()];
+  const all=[{jt:joinT,id:myPeer||''},...others.map(rp=>({jt:rp.jt,id:rp.peer}))].sort((a,b)=>a.jt-b.jt||(a.id<b.id?-1:1));
+  if(all.findIndex(e=>e.id===(myPeer||''))>=maxPlayers){roomFull();return}}
+ if(!isCreator&&!balanced&&adopted&&me&&teamCount>0&&remotes.size>0){balanced=true;pendingPick=true}
  if(pendingPick&&me){pendingPick=false;myColor=leastTeam();me.team=myColor;me.col=COLORS[myColor];updTeamBtn();hudSig='';publish(true)}
  players=[me,...remotes.values()];renderHud();updRoomInfo()}
 function newRound(r){round=r;hitBy.clear();roundEndT=0;roundWinner=null;pctx.clearRect(0,0,W,H);balls=[];pups=[];puT=4;if(me){me.deaths=0;spawn(me)}publish(true);renderHud()}
@@ -387,7 +396,7 @@ function computeScores(){for(const p of players)p.score=0;
  credit([...hitBy],me);for(const rp of remotes.values()){if(rp.r===round)credit(rp.h,rp);else rp.deaths=0}}
 function publish(force){if(!net||mode!=='online'||!me)return;const t=performance.now();if(!force&&t-lastPub<50)return;lastPub=t;
  const auth=myPeer!==null&&authority()===myPeer;
- net.presence({pu:auth?pups.slice(0,4):[],pk:myPicks,f:fxBits(me),n:nick,c:myColor,tc:teamCount,cr:isCreator?1:0,x:Math.round(me.x),y:Math.round(me.y),a:+me.ang.toFixed(2),d:me.dead>0?1:0,v:me.inv>0?1:0,r:round,s:myShots,h:[...hitBy]}).catch(()=>{})}
+ net.presence({pu:auth?pups.slice(0,4):[],pk:myPicks,f:fxBits(me),n:nick,c:myColor,tc:teamCount,mx:maxPlayers,jt:joinT,cr:isCreator?1:0,x:Math.round(me.x),y:Math.round(me.y),a:+me.ang.toFixed(2),d:me.dead>0?1:0,v:me.inv>0?1:0,r:round,s:myShots,h:[...hitBy]}).catch(()=>{})}
 async function joinRoom(code,asHost){code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,4);
  if(code.length!==4){netMsg('Kode room harus 4 huruf/angka.','bad');return}
  if(!room){netMsg('Mode online belum tersambung.','bad');return}
@@ -401,7 +410,7 @@ async function joinRoom(code,asHost){code=String(code||'').toLowerCase().replace
    'Tidak bisa masuk room ('+(c||'error')+').','bad');return 'err'}
  net=nr;roomCode=code;mode='online';round=0;mySeq=0;myShots=[];hitBy=new Map();remotes.clear();roundEndT=0;roundWinner=null;
  if(typeof net.selfId==='function')myPeer=net.selfId();
- isCreator=!!asHost;adopted=false;adoptedCr=false;teamCount=+$('onTeams').value;if(teamCount>0&&myColor>=teamCount)myColor=0;
+ isCreator=!!asHost;adopted=false;adoptedCr=false;balanced=false;fullChecked=false;joinT=Date.now();joinAt=performance.now();maxPlayers=evenMax($('onMax').value);teamCount=+$('onTeams').value;if(teamCount>0&&myColor>=teamCount)myColor=0;
  me=newPlayer({id:0,schemes:[0,1],gp:0,name:nick,col:COLORS[myColor],team:teamCount>0?myColor:-1,peer:myPeer});players=[me];updTeamBtn();
  pctx.clearRect(0,0,W,H);balls=[];parts=[];pups=[];texts=[];puT=4;myPicks=[];localPicked.clear();spawn(me);
  netUnsubs=[net.onPeers(handleNetPeers,()=>{}),net.onConnection(c=>{$('rbInfo').dataset.c=c?'1':'0';updRoomInfo()},()=>{})];
@@ -416,8 +425,9 @@ async function leaveRoom(){netUnsubs.forEach(u=>{try{u()}catch(e){}});netUnsubs=
  if(room)room.presence({room:null}).catch(()=>{});
  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
  mode='local';teamCount=0;remotes.clear();$('roombar').hidden=true;$('teamBtn').hidden=true;hudSig='';state='lobby';show('lobby');setTab('online')}
+function roomFull(){const code=roomCode.toUpperCase(),m=maxPlayers;leaveRoom().then(()=>netMsg('Room '+code+' sudah penuh (maksimal '+m+' pemain). Minta temanmu membuat room baru atau menaikkan batasnya.','bad'))}
 function updRoomInfo(){const n=1+remotes.size,c=$('rbInfo').dataset.c!=='0';
- $('rbInfo').textContent=(c?'':'Koneksi terputus, menyambung ulang… · ')+n+' pemain · ronde '+(round+1)+' · pertama ke '+ONLINE_TARGET}
+ $('rbInfo').textContent=(c?'':'Koneksi terputus, menyambung ulang… · ')+n+'/'+maxPlayers+' pemain · ronde '+(round+1)+' · pertama ke '+ONLINE_TARGET}
 
 /* Relay adapter for the public website: every player connects to a public MQTT broker over secure WebSocket
    and publishes its presence to pbarena/v2/<code>/p/<id>; everyone subscribed to the room hears everyone.
@@ -597,7 +607,9 @@ function renderSlots(){const n=+$('teams').value;$('slots').innerHTML=slotMode.m
  <button data-i="${i}" id="slot${i}">${MODE_TXT[m]}</button>${n?`<button class="tb" data-t="${i}" id="team${i}">Tim ${NAMES[tm]}</button>`:''}</div>`}).join('')}
 function renderSwatches(){const n=+$('onTeams').value;if(n&&myColor>=n)myColor=0;$('swLabel').textContent=n?'Pilih tim':'Warna';
  $('sw').innerHTML=COLORS.slice(0,n||8).map((c,i)=>`<button style="--c:${c}" data-c="${i}" class="${i===myColor?'on':''}" aria-label="${n?'Tim '+NAMES[i]:'Warna '+(i+1)}"></button>`).join('')}
-$('onTeams').addEventListener('change',renderSwatches);
+function syncMax(){const n=+$('onTeams').value,sel=$('onMax');let ok=[2,4,6,8].filter(v=>!n||v%n===0);if(!ok.length)ok=[8];
+ const cur=+sel.value;sel.innerHTML=ok.map(v=>`<option value="${v}">${v} orang${n?' ('+v/n+' per tim)':''}</option>`).join('');sel.value=String(ok.includes(cur)?cur:ok.includes(4)?4:ok[0])}
+$('onTeams').addEventListener('change',()=>{renderSwatches();syncMax()});syncMax();
 function setTab(t){$('tabLocal').classList.toggle('on',t==='local');$('tabOnline').classList.toggle('on',t==='online');$('paneLocal').hidden=t!=='local';$('paneOnline').hidden=t!=='online'}
 function saveProfile(){nick=($('nick').value.trim()||nick).slice(0,14);try{localStorage.setItem('pb-nick',nick);localStorage.setItem('pb-col',String(myColor))}catch(e){}}
 
@@ -635,7 +647,9 @@ $('leaveBtn').onclick=leaveRoom;
 function syncTouch(){const on=touchOn&&(state==='play'||state==='pause');$('touchbar').hidden=!on;document.body.classList.toggle('pt',on);if(!on){touch.mx=0;touch.my=0;touch.fire=false}}
 function goFull(){if(!touchOn)return;const d=document,el=d.documentElement;try{if(!d.fullscreenElement&&el.requestFullscreen){const r=el.requestFullscreen({navigationUI:'hide'});
  if(r&&r.then)r.then(()=>{try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(_){}}).catch(()=>{})}}catch(_){}}
-$('teamBtn').onclick=()=>{if(!(mode==='online'&&teamCount>0&&me))return;myColor=(myColor+1)%teamCount;me.team=myColor;me.col=COLORS[myColor];saveProfile();spawn(me);hudSig='';updTeamBtn();renderHud();publish(true)};
+$('teamBtn').onclick=()=>{if(!(mode==='online'&&teamCount>0&&me))return;const c=teamCounts(),cap=teamCap();let nx=-1;
+ for(let k=1;k<teamCount;k++){const t=(myColor+k)%teamCount;if(c[t]<cap){nx=t;break}}
+ if(nx<0){floatText(me.x,me.y-34,'Tim lain penuh','#f2efe8');return}myColor=nx;me.team=myColor;me.col=COLORS[myColor];saveProfile();spawn(me);hudSig='';updTeamBtn();renderHud();publish(true)};
 const inviteLink=()=>location.origin+location.pathname+'#room-'+roomCode;
 async function shareLink(btn){const link=inviteLink(),txt='Ayo main Paintball Arena bareng! Room '+roomCode.toUpperCase()+': '+link;
  try{if(navigator.share&&matchMedia('(pointer:coarse)').matches){await navigator.share({title:'Paintball Arena',text:txt,url:link});return}}catch(e){if(e&&e.name==='AbortError')return}
