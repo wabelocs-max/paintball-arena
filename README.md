@@ -7,7 +7,7 @@ Game tembak-tembakan cat dari atas (top-down) yang jalan langsung di browser.
 ## Mode
 
 - **Main lokal**: 2–4 pemain di satu keyboard/gamepad, slot kosong bisa diisi bot.
-- **Main online**: buat room, kirim kode 4 huruf atau tautan undangan ke teman. Browser para pemain tersambung langsung (WebRTC lewat [PeerJS](https://peerjs.com)); pembuat room jadi host.
+- **Main online**: buat room, kirim kode 4 huruf atau tautan undangan ke teman. Semua pemain tersambung lewat server relay publik (MQTT over WebSocket di `broker.emqx.io`, cadangan `broker.hivemq.com`), jadi bisa main dari data seluler maupun wifi. Room tetap ada selama masih ada pemain di dalamnya.
 - **Tim**: Bebas (sendiri-sendiri), 2, 3, atau 4 tim. Tiap tim punya warna sendiri, peluru teman setim tidak melukai, skor dihitung per tim.
 
 ## Power-up
@@ -36,12 +36,12 @@ Gamepad: stik kiri jalan, stik kanan bidik, RT atau A tembak. `Esc` / `P` untuk 
 
 Saat online, pemain memakai WASD atau panah.
 
-**HP/tablet:** centang "Tampilkan tombol layar sentuh" di lobi (otomatis menyala di layar sentuh). Joystick kiri untuk jalan dan membidik, tombol Tembak di kanan. Paling nyaman dimainkan dengan HP dimiringkan (landscape).
+**HP/tablet:** centang "Tampilkan tombol layar sentuh" di lobi (otomatis menyala di layar sentuh). Joystick kiri untuk jalan dan membidik, tombol Tembak di kanan. Saat main, game mengisi seluruh layar; dengan HP dimiringkan (landscape) tombol menumpang di atas arena. Di Android, game otomatis masuk layar penuh.
 
 ## Catatan online
 
-- Room tetap ada selama pembuatnya tidak keluar atau menutup tab.
-- Maksimal 8 pemain per room.
-- Sebagian jaringan kantor/sekolah atau operator seluler memblokir koneksi langsung antar-browser; kalau tidak bisa tersambung, coba jaringan lain.
+- Maksimal 16 pemain per room (paling enak 2–8).
+- Kalau tidak bisa tersambung: cek internet, matikan VPN atau pemblokir iklan yang memblokir WebSocket, lalu muat ulang halaman.
+- Server relay yang dipakai adalah server publik gratis: siapa pun yang tahu kode room bisa ikut masuk, dan datanya (posisi, tembakan, skor) tidak dienkripsi end-to-end. Jangan kirim data pribadi lewat game ini.
 
 Semua kode ada di satu file: `index.html`.

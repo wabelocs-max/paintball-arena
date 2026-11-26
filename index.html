@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16181c"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Paintball Arena</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,7 +15,8 @@
    LAYOUT: modest title, arena large on top, score chips above it, lobby as an overlay card */
 :root{color-scheme:dark;--bg:#16181c;--panel:#22252b;--line:#353941;--ink:#f2efe8;--mute:#a7abb3;--p0:#ff2e7e;--p2:#ffd400}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Rubik,system-ui,sans-serif;overflow-x:clip;
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{margin:0;-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);font:16px/1.55 Rubik,system-ui,sans-serif;overflow-x:clip;
 background-image:radial-gradient(circle at 12% 8%,rgba(255,46,126,.10),transparent 32%),radial-gradient(circle at 90% 90%,rgba(47,140,255,.10),transparent 35%)}
 .wrap{max-width:1240px;margin:0 auto;padding:clamp(16px,3vw,32px) max(4vw,14px)}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;margin-bottom:14px}
@@ -87,6 +89,29 @@ kbd{font:500 13px Rubik,sans-serif;background:#2c3037;border:1px solid var(--lin
 .fire{width:130px;height:130px;border-radius:50%;background:var(--p0);border:0;color:#fff;font:400 18px Bungee,sans-serif;box-shadow:0 8px 0 #9e1450,0 12px 20px rgba(0,0,0,.4);touch-action:none;flex:none}
 .fire.on{transform:translateY(5px);box-shadow:0 3px 0 #9e1450}
 .chk{display:flex;gap:8px;align-items:center;color:var(--mute);min-height:44px;cursor:pointer}.chk input{width:22px;min-height:22px;height:22px;accent-color:var(--p0)}
+.invite{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:#2a1520;border:2px solid var(--p0);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.invite b{display:block;font-size:17px}.invite span{color:var(--mute);font-size:14px}.invite b span{color:var(--ink);font:400 18px Bungee,sans-serif;letter-spacing:2px}
+.stage{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}canvas{touch-action:none}
+.thint{font-size:13px;color:var(--mute);text-align:center;max-width:12em}
+/* phone play mode: game fills the screen */
+body.pt{overflow:hidden;position:fixed;inset:0;overscroll-behavior:none}
+body.pt header,body.pt .roombar{display:none!important}
+body.pt .wrap{max-width:none;height:100vh;height:100dvh;padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));display:flex;flex-direction:column}
+body.pt .hud{min-height:0;margin-bottom:4px;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+body.pt .chip{padding:2px 10px 2px 4px;font-size:13px;white-space:nowrap;flex:none}body.pt .chip i{width:14px;height:14px}body.pt .chip b{font-size:15px}
+body.pt .timer{font-size:15px}
+body.pt .stage{flex:1;min-height:0;border-radius:8px;box-shadow:none;background:#0e0f12}
+body.pt canvas{width:100%;height:100%;aspect-ratio:auto;object-fit:contain;background:#0e0f12}
+body.pt .touchbar{margin-top:8px;flex:none}
+@media(orientation:landscape){
+ body.pt .touchbar{position:fixed;left:0;right:0;bottom:0;margin:0;padding:0 max(14px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));pointer-events:none;align-items:flex-end}
+ body.pt .touchbar>*{pointer-events:auto}
+ body.pt .stick{opacity:.55;background:radial-gradient(circle,rgba(255,255,255,.12) 0 55%,rgba(255,255,255,.06) 56%)}
+ body.pt .fire{opacity:.75}
+ body.pt .tmid{flex-direction:row;align-self:flex-start;position:fixed;top:max(6px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right))}
+ body.pt .tmid button{min-height:34px;padding:0 10px;opacity:.8}
+ body.pt .thint{display:none}
+}
 @media(max-width:700px){.ov{position:fixed;z-index:20}.stick{width:130px;height:130px}.fire{width:112px;height:112px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -120,6 +145,7 @@ kbd{font:500 13px Rubik,sans-serif;background:#2c3037;border:1px solid var(--lin
           </div>
         </div>
         <div class="pane" id="paneOnline" hidden>
+          <div class="invite" id="invite" hidden><div><b>Kamu diundang ke room <span id="inviteCode"></span></b><span>Isi nama dan pilih tim, lalu tekan Gabung.</span></div><button class="go" id="inviteBtn">Gabung</button></div>
           <h2>Main bareng teman</h2>
           <p>Buat room, lalu kirim kodenya ke teman. Pemain atau tim pertama yang dapat 15 tembakan kena memenangkan ronde, lalu ronde baru mulai otomatis.</p>
           <div class="row" style="margin-bottom:12px"><label>Mode room baru <select id="onTeams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label></div>
@@ -152,6 +178,8 @@ kbd{font:500 13px Rubik,sans-serif;background:#2c3037;border:1px solid var(--lin
     <div class="ov" id="pause" hidden>
       <div class="card" style="width:min(420px,100%);text-align:center">
         <h2 id="pauseTitle">Jeda</h2><p id="pauseText">Tarik napas dulu.</p>
+        <p id="pauseRoom" hidden style="margin:-6px 0 14px">Kode room <b id="pauseCode" style="font:400 20px Bungee,sans-serif;letter-spacing:2px;color:var(--ink)"></b></p>
+        <div class="row" style="justify-content:center;margin-bottom:10px"><button id="pauseLink" hidden>Salin tautan undangan</button></div>
         <div class="row" style="justify-content:center"><button class="go" id="resume">Lanjut</button><button id="quit">Ke lobi</button></div>
       </div>
     </div>
@@ -165,14 +193,14 @@ kbd{font:500 13px Rubik,sans-serif;background:#2c3037;border:1px solid var(--lin
   </div>
   <div class="touchbar" id="touchbar" hidden>
     <div class="stick" id="stick" aria-label="Joystick"><div class="knob" id="knob"></div></div>
-    <div class="tmid"><button id="tMenu">Menu</button><button id="tFull">Layar penuh</button></div>
+    <div class="tmid"><button id="tMenu">Menu</button><button id="tFull">Layar penuh</button><span class="thint">Miringkan HP untuk arena lebih besar</span></div>
     <button class="fire" id="fireBtn">Tembak</button>
   </div>
   <div class="roombar" id="roombar" hidden>
     Room <b id="rbCode"></b><button id="copyCode">Salin kode</button><button id="copyLink" hidden>Salin tautan undangan</button><button id="teamBtn" hidden>Ganti tim</button><span id="rbInfo"></span><button id="leaveBtn">Keluar room</button>
   </div>
 </div>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/mqtt@5.14.0/dist/mqtt.min.js"></script>
 <script>
 {
 const W=1200,H=750,cv=document.getElementById('cv'),ctx=cv.getContext('2d');
@@ -189,7 +217,8 @@ const OBS=[{x:560,y:335,w:80,h:80},{x:250,y:150,w:140,h:40},{x:810,y:150,w:140,h
  {x:150,y:300,w:40,h:150},{x:1010,y:300,w:40,h:150},{x:420,y:240,w:40,h:90},{x:740,y:420,w:40,h:90},{x:540,y:92,w:120,h:36},{x:540,y:622,w:120,h:36},
  {x:410,y:470,w:70,h:40},{x:720,y:240,w:70,h:40}];
 const SPAWNS=[[60,60],[1140,690],[1140,60],[60,690],[600,40],[600,710],[40,375],[1160,375]];
-const R=16,MAXAMMO=14,ONLINE_TARGET=15;
+const R=16,MAXAMMO=14,ONLINE_TARGET=15;let UI=1;
+try{const uro=new ResizeObserver(()=>{const r=cv.getBoundingClientRect();const w=Math.min(r.width,r.height*W/H);if(w>0)UI=clamp(820/w,1,2.2)});uro.observe(cv)}catch(e){}
 let SPEED=150,BSPD=490,COOL=.26,GS=.65;
 const keys=new Set();
 let teamCount=0,slotTeam=[0,1,0,1];
@@ -227,7 +256,7 @@ function drawPups(){const t=performance.now()/1000;for(const u of pups){const d=
  else if(d.k==='shd'){ctx.moveTo(0,-10);ctx.lineTo(8,-6);ctx.quadraticCurveTo(8,6,0,11);ctx.quadraticCurveTo(-8,6,-8,-6);ctx.closePath();ctx.fill()}
  else{for(const a of [-.5,0,.5]){ctx.moveTo(-6,6);ctx.lineTo(-6+Math.sin(a)*16,6-Math.cos(a)*16)}ctx.stroke()}
  ctx.restore()}
- for(const q of texts){ctx.globalAlpha=Math.min(1,q.life*2);ctx.font='700 15px Rubik';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(q.t,q.x+1,q.y+1);ctx.fillStyle=q.col;ctx.fillText(q.t,q.x,q.y)}ctx.globalAlpha=1}
+ for(const q of texts){ctx.globalAlpha=Math.min(1,q.life*2);ctx.font='700 '+Math.round(15*UI)+'px Rubik';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(q.t,q.x+1,q.y+1);ctx.fillStyle=q.col;ctx.fillText(q.t,q.x,q.y)}ctx.globalAlpha=1}
 const isEnemy=(a,b)=>!(teamCount>0&&a.team>=0&&a.team===b.team);
 function teamScores(){const t=[];for(let i=0;i<teamCount;i++)t.push({i,name:'Tim '+NAMES[i],col:COLORS[i],score:0,deaths:0,n:0,members:[]});
  for(const p of players)if(p.team>=0&&t[p.team]){const x=t[p.team];x.score+=p.score|0;x.deaths+=p.deaths|0;x.n++;x.members.push(p)}return t}
@@ -235,7 +264,8 @@ function setSpeed(g){GS=g;SPEED=230*g;BSPD=760*g;COOL=.17/g}
 
 /* ---------- audio ---------- */
 let ac=null;
-function initAudio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}}
+function initAudio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}try{if(ac&&ac.state==='suspended')ac.resume()}catch(e){}}
+addEventListener('pointerdown',()=>{if(ac)initAudio()},{passive:true});
 function sfx(f1,f2,dur,vol,type){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.type=type||'square';
  o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
  o.connect(g).connect(ac.destination);o.start(t);o.stop(t+dur)}catch(e){}}
@@ -366,7 +396,7 @@ async function joinRoom(code,asHost){code=String(code||'').toLowerCase().replace
   if(c==='taken')return 'taken';
   netMsg(c==='not_found'?'Room '+code.toUpperCase()+' tidak ditemukan. Cek kodenya, atau minta temanmu membuat room lagi.':
    c==='full'||c==='limit_reached'?'Room penuh (maksimal 8 pemain).':
-   c==='timeout'?'Koneksi terlalu lama. Cek internet lalu coba lagi.':
+   c==='timeout'?'Tidak bisa tersambung ke server room. Cek internet, matikan VPN/pemblokir iklan, lalu coba lagi.':
    c==='browser-incompatible'?'Browser ini tidak mendukung main online. Coba Chrome, Edge, atau Firefox terbaru.':
    'Tidak bisa masuk room ('+(c||'error')+').','bad');return 'err'}
  net=nr;roomCode=code;mode='online';round=0;mySeq=0;myShots=[];hitBy=new Map();remotes.clear();roundEndT=0;roundWinner=null;
@@ -377,7 +407,7 @@ async function joinRoom(code,asHost){code=String(code||'').toLowerCase().replace
  netUnsubs=[net.onPeers(handleNetPeers,()=>{}),net.onConnection(c=>{$('rbInfo').dataset.c=c?'1':'0';updRoomInfo()},()=>{})];
  if(typeof net.onEnd==='function')net.onEnd(why=>{if(mode==='online'&&net===nr)leaveRoom().then(()=>netMsg(why==='full'?'Room penuh (maksimal 8 pemain).':'Host menutup room atau koneksi ke host terputus.','bad'))});
  room.presence({room:code}).catch(()=>{});
- $('copyLink').hidden=netKind!=='peer';netMsg(netKind==='peer'?'Siap. Buat room lalu bagikan kode atau tautannya.':'Tersambung. Siap main online.','ok');
+ $('copyLink').hidden=netKind!=='relay';$('pauseLink').hidden=netKind!=='relay';$('invite').hidden=true;netMsg(netKind==='relay'?'Siap. Buat room lalu bagikan kode atau tautannya.':'Tersambung. Siap main online.','ok');
  try{location.hash='room-'+code}catch(e){}
  $('rbCode').textContent=code.toUpperCase();$('roombar').hidden=false;
  show(null);state='play';publish(true);renderHud();updRoomInfo();cv.focus();return 'ok'}
@@ -389,45 +419,46 @@ async function leaveRoom(){netUnsubs.forEach(u=>{try{u()}catch(e){}});netUnsubs=
 function updRoomInfo(){const n=1+remotes.size,c=$('rbInfo').dataset.c!=='0';
  $('rbInfo').textContent=(c?'':'Koneksi terputus, menyambung ulang… · ')+n+' pemain · ronde '+(round+1)+' · pertama ke '+ONLINE_TARGET}
 
-/* PeerJS adapter: same shape as the claude.ai room (join -> presence/onPeers/onConnection/leave).
-   The room creator is the host; every client sends its presence to the host, the host relays everyone's. */
-const PFX='pbarena-v1-';let netKind='none';
-function peerNs(){return{presence:async()=>{},onPeers:()=>()=>{},join:(name,opt)=>peerJoin(name.replace(/^pb-/,''),!!(opt&&opt.host))}}
-function peerJoin(code,asHost){return new Promise((res,rej)=>{
- let peer;try{peer=asHost?new Peer(PFX+code,{debug:0}):new Peer({debug:0})}catch(e){rej({code:'error'});return}
- const pres=new Map(),conns=new Map(),hPeers=[],hConn=[],hEnd=[];
- let myId=null,mine={},conn=null,done=false,closed=false,dirty=false,timer=null,connected=false;
- const fail=c=>{if(done)return;done=true;clearTimeout(to);try{peer.destroy()}catch(e){}rej({code:c})};
- const to=setTimeout(()=>fail('timeout'),12000);
- const snap=()=>[...pres].map(([id,p])=>({peer:id,presence:p,sameTab:id===myId,isMe:id===myId,kind:'viewer',guest:false,by:null}));
- const notify=()=>{const s=snap();for(const h of hPeers.slice())h({peers:s,joined:[],left:[],updated:[]})};
- const setConn=c=>{connected=c;for(const h of hConn)h(c)};
- const broadcast=()=>{if(!dirty)return;dirty=false;const m={};for(const [id,p] of pres)m[id]=p;
-  for(const c of conns.values())if(c.open){try{c.send({t:'all',m})}catch(e){}}notify()};
- const end=why=>{if(closed)return;closed=true;clearInterval(timer);try{peer.destroy()}catch(e){}for(const h of hEnd)h(why)};
- const api={name:code,selfId:()=>myId,peers:snap,connected:()=>connected,
+/* Relay adapter for the public website: every player connects to a public MQTT broker over secure WebSocket
+   and publishes its presence to pbarena/v2/<code>/p/<id>; everyone subscribed to the room hears everyone.
+   Server-relayed, so it works behind mobile carrier NAT, and a room survives its creator leaving.
+   Same shape as the claude.ai room: join -> presence/onPeers/onConnection/leave. */
+let netKind='none';
+const BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
+function relayNs(){return{presence:async()=>{},onPeers:()=>()=>{},join:name=>relayJoin(name.replace(/^pb-/,''))}}
+function relayJoin(code){return new Promise((res,rej)=>{
+ const id='c'+Math.random().toString(36).slice(2,10),base='pbarena/v2/'+code+'/p/';
+ const pres=new Map(),seenAt=new Map(),hPeers=[],hConn=[];
+ let mine={},client=null,done=false,closed=false,dirty=false,connected=false,lastSend=0,sendTimer=null,bi=0,to=null;
+ const snap=()=>[{peer:id,presence:mine,sameTab:true,isMe:true,kind:'viewer',guest:false,by:null},
+  ...[...pres].map(([k,p])=>({peer:k,presence:p,sameTab:false,isMe:false,kind:'viewer',guest:false,by:null}))];
+ const notify=()=>{const sn=snap();for(const h of hPeers.slice())h({peers:sn,joined:[],left:[],updated:[]})};
+ const setConn=c=>{if(c===connected)return;connected=c;for(const h of hConn)h(c)};
+ const tick=setInterval(()=>{const t=Date.now();for(const [k,at] of seenAt)if(t-at>6000){seenAt.delete(k);pres.delete(k);dirty=true}
+  if(dirty){dirty=false;notify()}},50);
+ const send=()=>{sendTimer=null;if(!client||!connected||closed)return;lastSend=Date.now();try{client.publish(base+id,JSON.stringify(mine),{qos:0})}catch(e){}};
+ const keepAlive=setInterval(()=>{if(Date.now()-lastSend>1500)send()},1000);
+ const api={name:code,selfId:()=>id,peers:snap,connected:()=>connected,
   presence:async p=>{for(const k in p){if(p[k]===null)delete mine[k];else mine[k]=p[k]}
-   if(asHost){pres.set(myId,{...mine});dirty=true}else if(conn&&conn.open){try{conn.send({t:'p',p:mine})}catch(e){}}},
+   const wait=70-(Date.now()-lastSend);if(wait<=0){if(sendTimer){clearTimeout(sendTimer);sendTimer=null}send()}else if(!sendTimer)sendTimer=setTimeout(send,wait)},
   onPeers:h=>{hPeers.push(h);setTimeout(notify,0);return()=>{const i=hPeers.indexOf(h);if(i>=0)hPeers.splice(i,1)}},
   onConnection:h=>{hConn.push(h);setTimeout(()=>h(connected),0);return()=>{const i=hConn.indexOf(h);if(i>=0)hConn.splice(i,1)}},
-  onEnd:h=>{hEnd.push(h);return()=>{}},
-  leave:async()=>{closed=true;clearInterval(timer);try{peer.destroy()}catch(e){}}};
- peer.on('open',id=>{myId=id;
-  if(asHost){clearTimeout(to);done=true;pres.set(myId,{});setConn(true);timer=setInterval(broadcast,40);res(api);return}
-  conn=peer.connect(PFX+code,{serialization:'json'});
-  conn.on('open',()=>{clearTimeout(to);done=true;setConn(true);res(api)});
-  conn.on('data',d=>{if(!d||typeof d!=='object')return;
-   if(d.t==='full'){if(!done)fail('full');else end('full');return}
-   if(d.t==='all'&&d.m&&typeof d.m==='object'){pres.clear();for(const k of Object.keys(d.m).slice(0,16)){const v=d.m[k];if(v&&typeof v==='object')pres.set(k,v)}notify()}});
-  conn.on('close',()=>{setConn(false);if(done)end('host')});
-  conn.on('error',()=>{})});
- if(asHost)peer.on('connection',c=>{
-  c.on('open',()=>{if(conns.size>=7){try{c.send({t:'full'})}catch(e){}setTimeout(()=>{try{c.close()}catch(e){}},400);return}conns.set(c.peer,c);dirty=true});
-  c.on('data',d=>{if(conns.get(c.peer)!==c)return;if(d&&d.t==='p'&&d.p&&typeof d.p==='object'&&JSON.stringify(d.p).length<4096){pres.set(c.peer,d.p);dirty=true}});
-  c.on('close',()=>{if(conns.get(c.peer)===c){conns.delete(c.peer);pres.delete(c.peer);dirty=true}});
-  c.on('error',()=>{})});
- peer.on('disconnected',()=>{if(!closed){try{peer.reconnect()}catch(e){}}});
- peer.on('error',e=>{const t=e&&e.type;if(!done)fail(t==='unavailable-id'?'taken':t==='peer-unavailable'?'not_found':(t||'error'))});
+  leave:async()=>{if(closed)return;closed=true;clearInterval(tick);clearInterval(keepAlive);if(sendTimer)clearTimeout(sendTimer);
+   try{client.publish(base+id,'',{qos:0})}catch(e){}await new Promise(r=>setTimeout(r,150));try{client.end(true)}catch(e){}}};
+ const fail=c=>{if(done)return;done=true;closed=true;clearInterval(tick);clearInterval(keepAlive);try{client&&client.end(true)}catch(e){}rej({code:c})};
+ const attempt=()=>{if(done)return;if(bi>=BROKERS.length){fail('timeout');return}const url=BROKERS[bi++];
+  try{client=mqtt.connect(url,{clientId:'pb_'+id,clean:true,keepalive:20,reconnectPeriod:2000,connectTimeout:8000,
+    will:{topic:base+id,payload:'',qos:0,retain:false}})}catch(e){attempt();return}
+  const c=client;clearTimeout(to);to=setTimeout(()=>{if(!done&&client===c){try{c.end(true)}catch(e){}attempt()}},9000);
+  c.on('connect',()=>{if(client!==c)return;c.subscribe(base+'+',{qos:0},err=>{if(err){if(!done){try{c.end(true)}catch(e){}attempt()}return}
+    setConn(true);send();if(!done){done=true;clearTimeout(to);res(api)}})});
+  c.on('message',(topic,buf)=>{if(client!==c||closed)return;const pid=topic.slice(base.length);if(!pid||pid===id||pid.length>24)return;
+   let txt='';try{txt=typeof buf==='string'?buf:new TextDecoder().decode(buf)}catch(e){txt=String(buf)}if(!txt){if(pres.delete(pid)){seenAt.delete(pid);dirty=true}return}
+   if(txt.length>4096||pres.size>=16&&!pres.has(pid))return;
+   try{const v=JSON.parse(txt);if(v&&typeof v==='object'&&!Array.isArray(v)){pres.set(pid,v);seenAt.set(pid,Date.now());dirty=true}}catch(e){}});
+  c.on('offline',()=>{if(client===c)setConn(false)});c.on('close',()=>{if(client===c)setConn(false)});
+  c.on('reconnect',()=>{});c.on('error',()=>{})};
+ attempt();
 })}
 function randCode(){const ab='abcdefghjkmnpqrstuvwxyz23456789';let c='';for(let i=0;i<4;i++)c+=ab[Math.floor(Math.random()*ab.length)];return c}
 
@@ -439,11 +470,13 @@ function setNetReady(ok){$('create').disabled=!ok;$('joinBtn').disabled=!ok;
  netMsg(ok?'Tersambung. Siap main online.':'Mode online tidak tersedia di sini. Cek koneksi internet lalu muat ulang halaman.',ok?'ok':'bad')}
 (async()=>{try{room=window.claude&&typeof window.claude.use==='function'?await window.claude.use('room'):null}catch(e){room=null}
  if(room){netKind='claude';setNetReady(true);room.onPeers(ch=>renderRooms(ch.peers),()=>setNetReady(false))}
- else if(typeof window.Peer==='function'){room=peerNs();netKind='peer';$('roomsBox').hidden=true;
-  $('onlineNote').textContent='Kirim kode atau tautan undangan ke teman. Siapa pun yang membuka website ini bisa ikut. Room tetap ada selama pembuatnya tidak keluar.';
+ else if(typeof window.mqtt!=='undefined'&&typeof window.mqtt.connect==='function'){room=relayNs();netKind='relay';$('roomsBox').hidden=true;
+  $('onlineNote').textContent='Kirim kode atau tautan undangan ke teman. Siapa pun yang membuka website ini bisa ikut, dari HP atau komputer, pakai data seluler atau wifi. Room tetap ada selama masih ada pemain di dalamnya.';
   setNetReady(true);netMsg('Siap. Buat room lalu bagikan kode atau tautannya.','ok')}
  else{setNetReady(false);return}
- const h=(location.hash||'').match(/^#room-([a-z0-9]{4})$/);if(h){$('code').value=h[1].toUpperCase();setTab('online')}})();
+ const h=(location.hash||'').match(/^#room-([a-z0-9]{4})$/);if(h){const c=h[1];$('code').value=c.toUpperCase();setTab('online');
+  $('inviteCode').textContent=c.toUpperCase();$('invite').hidden=false;$('inviteBtn').onclick=()=>{saveProfile();goFull();$('inviteBtn').disabled=true;joinRoom(c,false).finally(()=>{$('inviteBtn').disabled=false})};
+  try{$('inviteBtn').focus()}catch(e){}}})();
 
 /* ---------- update ---------- */
 function collide(p){p.x=clamp(p.x,R,W-R);p.y=clamp(p.y,R,H-R);
@@ -501,7 +534,7 @@ function drawObs(){for(const o of OBS){ctx.fillStyle='rgba(0,0,0,.4)';rrect(ctx,
  ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=2;rrect(ctx,o.x+2,o.y+2,o.w-4,o.h-4,10);ctx.stroke()}}
 const shadeCache={};function shadeOf(c){if(shadeCache[c])return shadeCache[c];const n=parseInt(c.slice(1),16),r=(n>>16)*.45|0,g=(n>>8&255)*.45|0,b=(n&255)*.45|0;return shadeCache[c]=`rgb(${r},${g},${b})`}
 function drawPlayer(p){if(p.x<0)return;
- if(p.dead>0){if(!p.remote){ctx.globalAlpha=.6;ctx.fillStyle='#f2efe8';ctx.font='500 15px Rubik';ctx.textAlign='center';ctx.fillText(Math.ceil(p.dead)+'',p.x,p.y+5);ctx.globalAlpha=1}return}
+ if(p.dead>0){if(!p.remote){ctx.globalAlpha=.6;ctx.fillStyle='#f2efe8';ctx.font='500 '+Math.round(15*UI)+'px Rubik';ctx.textAlign='center';ctx.fillText(Math.ceil(p.dead)+'',p.x,p.y+5);ctx.globalAlpha=1}return}
  if(p.inv>0&&Math.floor(performance.now()/100)%2)ctx.globalAlpha=.45;
  ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(p.x+3,p.y+7,R,R*.8,0,0,7);ctx.fill();
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.ang);
@@ -515,7 +548,7 @@ function drawPlayer(p){if(p.x<0)return;
  if(fb&1){ctx.fillStyle='rgba(25,224,224,.35)';ctx.beginPath();ctx.arc(p.x-Math.cos(p.ang)*14,p.y-Math.sin(p.ang)*14,R*.8,0,7);ctx.fill()}
  {let ix=p.x-((fb&2?1:0)+(fb&8?1:0)-1)*6;for(const [bit,c] of [[2,'#ff7a1a'],[8,'#b45cff']])if(fb&bit){ctx.fillStyle=c;ctx.beginPath();ctx.arc(ix,p.y+R+19,4,0,7);ctx.fill();ix+=12}}
  const label=p===me&&mode==='online'?p.name+' (kamu)':p.name;
- ctx.font='500 13px Rubik';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillText(label,p.x+1,p.y-R-11);ctx.fillStyle='#f2efe8';ctx.fillText(label,p.x,p.y-R-12);
+ {const ly=p.y-R-6-6*UI;ctx.font='500 '+Math.round(13*UI)+'px Rubik';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillText(label,p.x+1,ly+1);ctx.fillStyle='#f2efe8';ctx.fillText(label,p.x,ly)}
  if(!p.remote){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(p.x-18,p.y+R+7,36,4);ctx.fillStyle=p.ammo<1?'#ff5a5a':p.col;ctx.fillRect(p.x-18,p.y+R+7,36*p.ammo/MAXAMMO,4)}}
 function draw(){ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake*30,(Math.random()-.5)*shake*30);
  ctx.drawImage(floor,0,0);drawObs();ctx.drawImage(paint,0,0);
@@ -524,8 +557,8 @@ function draw(){ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake*30,
  for(const q of parts){ctx.globalAlpha=Math.max(0,q.life*2);ctx.fillStyle=q.col;ctx.fillRect(q.x-2,q.y-2,4,4)}ctx.globalAlpha=1;
  ctx.restore();
  if(mode==='online'&&state!=='lobby'){
-  if(remotes.size===0&&roundEndT<=0){ctx.fillStyle='rgba(14,15,18,.7)';ctx.fillRect(0,H-70,W,70);ctx.fillStyle='#f2efe8';ctx.textAlign='center';ctx.font='500 20px Rubik';
-   ctx.fillText('Menunggu teman… kirim kode room '+roomCode.toUpperCase()+'. Sambil menunggu, latihan menembak dulu.',W/2,H-28)}
+  if(remotes.size===0&&roundEndT<=0){const bh=Math.round(56+14*UI);ctx.fillStyle='rgba(14,15,18,.7)';ctx.fillRect(0,0,W,bh);ctx.fillStyle='#f2efe8';ctx.textAlign='center';ctx.font='500 '+Math.round(20*UI)+'px Rubik';
+   ctx.fillText(UI>1.3?'Menunggu teman… kode room '+roomCode.toUpperCase():'Menunggu teman… kirim kode room '+roomCode.toUpperCase()+'. Sambil menunggu, latihan menembak dulu.',W/2,bh/2+7*UI)}
   if(roundEndT>0&&roundWinner){ctx.fillStyle='rgba(14,15,18,.78)';ctx.fillRect(0,H/2-80,W,160);ctx.textAlign='center';
    ctx.fillStyle=roundWinner.col;ctx.font='400 52px Bungee, sans-serif';ctx.fillText(roundWinner.name+' menang!',W/2,H/2+5);
    ctx.fillStyle='#f2efe8';ctx.font='500 20px Rubik';ctx.fillText('Ronde baru dalam '+Math.ceil(roundEndT)+' detik',W/2,H/2+45)}}}
@@ -544,7 +577,8 @@ function updTimer(){const el=$('tm');if(!el)return;let s;
 function show(id){for(const k of ['lobby','pause','end'])$(k).hidden=k!==id;setTimeout(()=>{try{syncTouch()}catch(_){}},0)}
 function togglePause(){if(state==='play'){state='pause';
   $('pauseTitle').textContent=mode==='online'?'Menu':'Jeda';$('pauseText').textContent=mode==='online'?'Game tetap berjalan untuk teman-temanmu, dan kamu diam di tempat.':'Tarik napas dulu.';
-  $('quit').textContent=mode==='online'?'Keluar room':'Ke lobi';show('pause');$('resume').focus()}
+  $('quit').textContent=mode==='online'?'Keluar room':'Ke lobi';$('pauseRoom').hidden=mode!=='online';$('pauseCode').textContent=roomCode.toUpperCase();
+  if(mode!=='online')$('pauseLink').hidden=true;show('pause');$('resume').focus()}
  else if(state==='pause'){state='play';show(null);last=performance.now();cv.focus()}}
 function endGame(why){state='end';
  if(teamCount>0){const ts=teamScores().filter(t=>t.n).sort((a,b)=>b.score-a.score||a.deaths-b.deaths);const tie=ts.length>1&&ts[0].score===ts[1].score&&ts[0].deaths===ts[1].deaths;
@@ -575,8 +609,8 @@ $('sw').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)re
 $('rooms').addEventListener('click',e=>{const b=e.target.closest('button[data-code]');if(b){saveProfile();joinRoom(b.dataset.code)}});
 $('tabLocal').onclick=()=>setTab('local');$('tabOnline').onclick=()=>setTab('online');
 $('nick').value=nick;$('nick').addEventListener('change',saveProfile);
-$('create').onclick=async()=>{saveProfile();$('create').disabled=true;try{for(let i=0;i<4;i++){if(await joinRoom(randCode(),true)!=='taken')break}}finally{$('create').disabled=!room}};
-$('joinBtn').onclick=async()=>{saveProfile();$('joinBtn').disabled=true;try{await joinRoom($('code').value,false)}finally{$('joinBtn').disabled=!room}};
+$('create').onclick=async()=>{saveProfile();goFull();$('create').disabled=true;try{for(let i=0;i<4;i++){if(await joinRoom(randCode(),true)!=='taken')break}}finally{$('create').disabled=!room}};
+$('joinBtn').onclick=async()=>{saveProfile();goFull();$('joinBtn').disabled=true;try{await joinRoom($('code').value,false)}finally{$('joinBtn').disabled=!room}};
 $('code').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('joinBtn').click()}});
 $('copyCode').onclick=async()=>{try{await navigator.clipboard.writeText(roomCode.toUpperCase());$('copyCode').textContent='Tersalin'}catch(e){$('copyCode').textContent='Kode: '+roomCode.toUpperCase()}setTimeout(()=>$('copyCode').textContent='Salin kode',1500)};
 $('leaveBtn').onclick=leaveRoom;
@@ -595,12 +629,19 @@ $('leaveBtn').onclick=leaveRoom;
  $('tFull').onclick=()=>{const d=document,el=d.documentElement;try{if(d.fullscreenElement)d.exitFullscreen();else{const r=el.requestFullscreen&&el.requestFullscreen();if(r&&r.catch)r.catch(()=>{$('tFull').hidden=true})}}catch(_){$('tFull').hidden=true}};
  let def=false;try{def=matchMedia('(pointer:coarse)').matches}catch(_){}
  try{const v=localStorage.getItem('pb-touch');if(v!==null)def=v==='1'}catch(_){}
+ if(!(document.fullscreenEnabled&&document.documentElement.requestFullscreen))$('tFull').hidden=true;
  $('touchOn').checked=def;touchOn=def;
  $('touchOn').addEventListener('change',()=>{touchOn=$('touchOn').checked;try{localStorage.setItem('pb-touch',touchOn?'1':'0')}catch(_){}syncTouch()});}
-function syncTouch(){$('touchbar').hidden=!(touchOn&&(state==='play'||state==='pause'))}
+function syncTouch(){const on=touchOn&&(state==='play'||state==='pause');$('touchbar').hidden=!on;document.body.classList.toggle('pt',on);if(!on){touch.mx=0;touch.my=0;touch.fire=false}}
+function goFull(){if(!touchOn)return;const d=document,el=d.documentElement;try{if(!d.fullscreenElement&&el.requestFullscreen){const r=el.requestFullscreen({navigationUI:'hide'});
+ if(r&&r.then)r.then(()=>{try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(_){}}).catch(()=>{})}}catch(_){}}
 $('teamBtn').onclick=()=>{if(!(mode==='online'&&teamCount>0&&me))return;myColor=(myColor+1)%teamCount;me.team=myColor;me.col=COLORS[myColor];saveProfile();spawn(me);hudSig='';updTeamBtn();renderHud();publish(true)};
-$('copyLink').onclick=async()=>{const link=location.origin+location.pathname+'#room-'+roomCode;try{await navigator.clipboard.writeText(link);$('copyLink').textContent='Tautan tersalin'}catch(e){$('copyLink').textContent=link}setTimeout(()=>$('copyLink').textContent='Salin tautan undangan',2500)};
-$('start').onclick=startGame;
+const inviteLink=()=>location.origin+location.pathname+'#room-'+roomCode;
+async function shareLink(btn){const link=inviteLink(),txt='Ayo main Paintball Arena bareng! Room '+roomCode.toUpperCase()+': '+link;
+ try{if(navigator.share&&matchMedia('(pointer:coarse)').matches){await navigator.share({title:'Paintball Arena',text:txt,url:link});return}}catch(e){if(e&&e.name==='AbortError')return}
+ try{await navigator.clipboard.writeText(link);btn.textContent='Tautan tersalin'}catch(e){btn.textContent=link}setTimeout(()=>btn.textContent='Salin tautan undangan',2500)}
+$('copyLink').onclick=()=>shareLink($('copyLink'));$('pauseLink').onclick=()=>shareLink($('pauseLink'));
+$('start').onclick=()=>{goFull();startGame()};
 $('again').onclick=startGame;
 $('resume').onclick=togglePause;
 const toLobby=()=>{if(mode==='online'){leaveRoom();return}state='lobby';show('lobby');renderSlots()};
