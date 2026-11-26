@@ -23,6 +23,19 @@ Muncul acak di arena (maksimal 3 sekaligus). Jalan ke atasnya untuk mengambil.
 
 Semua efek hilang kalau kamu tertembak.
 
+## Senjata
+
+Kotak senjata (kotak persegi, beda dengan power-up yang berbentuk wajik) muncul acak di arena. Ambil kotaknya, dan tombol tembak otomatis memakai senjata itu sampai amunisinya habis, lalu kembali ke peluru cat biasa. Senjata hilang kalau kamu tertembak.
+
+| Senjata | Amunisi | Cara kerja |
+|---|---|---|
+| Roket | 3 | Peluru lambat, meledak saat kena tembok atau lawan; ledakan mengenai semua lawan di sekitarnya |
+| Bom | 3 | Dilempar, berhenti, lalu meledak ±1 detik kemudian dengan area besar (lingkaran merah putus-putus = peringatan) |
+| Shotgun | 6 | 7 peluru menyebar sekaligus, jarak dekat |
+| Laser | 4 | Tembakan instan, lurus dan jauh, berhenti di tembok |
+
+Ledakan dan tembakan tidak melukai teman setim maupun diri sendiri.
+
 ## Kontrol
 
 | Pemain | Jalan | Tembak |
