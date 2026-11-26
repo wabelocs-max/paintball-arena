@@ -3,125 +3,185 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#16181c"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0c0e13"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Paintball Arena</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-/* VOICE: loud, playful arcade — Saturday at an indoor paintball hall
-   IDEA: a warehouse arena floor, concrete and inflatable bunkers, slowly covered in everyone's paint
-   PICTURE: the live arena canvas itself, splats persisting for the whole match
-   COLOUR and TYPE: charcoal concrete, off-white bunkers, neon paint colours; Bungee titles + Rubik
-   LAYOUT: modest title, arena large on top, score chips above it, lobby as an overlay card */
-:root{color-scheme:dark;--bg:#16181c;--panel:#22252b;--line:#353941;--ink:#f2efe8;--mute:#a7abb3;--p0:#ff2e7e;--p2:#ffd400}
+/* VOICE: a polished modern game launcher — calm chrome so the paint does the shouting
+   IDEA: a night arena; the UI is a glass control panel over it, the colours are the paint teams
+   PICTURE: the live arena canvas, with the lobby as one tidy panel floating on it
+   COLOUR and TYPE: ink #0c0e13, glass panels, team neons as the only colour; Sora display + Inter UI
+   LAYOUT: brand bar, scoreboard, arena, room toolbar; lobby sections in a two-column grid that stacks on phones */
+:root{color-scheme:dark;--bg:#0c0e13;--bg2:#12151c;--panel:rgba(20,23,31,.92);--panel2:#181c25;--field:#0f1218;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
+--ink:#f4f5f7;--mute:#9aa1ad;--dim:#6b7280;--accent:#ff2e7e;--accent2:#ff5c93;--ok:#2ee87a;--bad:#ff5a5a;--focus:#ffd400;--r:14px;--r2:10px}
 *{box-sizing:border-box;min-width:0}
 html{-webkit-text-size-adjust:100%;touch-action:manipulation}
-body{margin:0;-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);font:16px/1.55 Rubik,system-ui,sans-serif;overflow-x:clip;
-background-image:radial-gradient(circle at 12% 8%,rgba(255,46,126,.10),transparent 32%),radial-gradient(circle at 90% 90%,rgba(47,140,255,.10),transparent 35%)}
-.wrap{max-width:1240px;margin:0 auto;padding:clamp(16px,3vw,32px) max(4vw,14px)}
-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;margin-bottom:14px}
-h1{font:400 clamp(30px,5vw,48px)/1.05 Bungee,Impact,sans-serif;margin:0;letter-spacing:.5px}
-h1 span{color:var(--p0)}
-header p{margin:0;color:var(--mute)}
-.hud{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;min-height:44px}
-.chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;font-weight:500}
-.chip.me{border-color:var(--ink)}
-.chip i{width:20px;height:20px;border-radius:50%;display:block;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3)}
-.chip b{font:400 20px Bungee,sans-serif;margin-left:4px}
-.timer{margin-left:auto;font:400 20px Bungee,sans-serif;white-space:nowrap}
-.stage{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 0 3px #2b2e34}
-canvas{display:block;width:100%;height:auto;aspect-ratio:1200/750;background:#1d2024;outline:none}
-.ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(14,15,18,.84);backdrop-filter:blur(3px);overflow:auto}
+body{margin:0;-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:clip;
+ background-image:radial-gradient(900px 500px at 10% -10%,rgba(255,46,126,.12),transparent 60%),radial-gradient(800px 500px at 100% 110%,rgba(47,140,255,.12),transparent 60%);background-attachment:fixed}
+.wrap{max-width:1240px;margin:0 auto;padding:clamp(14px,2.4vw,28px) max(3.5vw,14px) 28px}
+/* brand bar */
+header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.logo{width:42px;height:42px;flex:none;display:block}
+.brand h1{font:800 clamp(22px,3vw,28px)/1.1 Sora,Inter,sans-serif;margin:0;letter-spacing:-.02em}
+.brand h1 span{background:linear-gradient(90deg,#ff2e7e,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand p{margin:2px 0 0;color:var(--mute);font-size:14px}
+/* scoreboard */
+.hud.idle{visibility:hidden}
+.hud{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;min-height:40px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 6px;font-weight:600;font-size:14px}
+.chip.me{border-color:var(--line2);box-shadow:0 0 0 1px rgba(255,255,255,.12) inset}
+.chip i{width:18px;height:18px;border-radius:50%;display:block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+.chip .cnt{margin-left:-6px;color:var(--mute);font-weight:500}
+.chip b{font:700 15px Sora,sans-serif;min-width:30px;text-align:center;background:rgba(255,255,255,.07);border-radius:999px;padding:2px 9px;margin-left:2px;font-variant-numeric:tabular-nums}
+.timer{margin-left:auto;font:600 14px Inter,sans-serif;white-space:nowrap;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-variant-numeric:tabular-nums}
+/* arena */
+.stage{position:relative;display:grid;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:auto;aspect-ratio:1200/750;background:#1d2024;outline:none;touch-action:none}
+.stage>canvas,.stage>.ov{grid-area:1/1}
+.ov{position:relative;min-height:100%;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(8,9,12,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:auto}
 .ov[hidden],[hidden]{display:none!important}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,28px);width:min(860px,100%);margin:auto}
-.card h2{font:400 clamp(22px,3vw,32px)/1.1 Bungee,sans-serif;margin:0 0 6px}
-.card>p,.pane>p{margin:0 0 16px;color:var(--mute)}
-.card h3{font-size:16px;margin:18px 0 8px}
-.tabs{display:flex;gap:6px;margin:0 0 16px;background:#1b1d22;padding:4px;border-radius:12px;width:max-content;max-width:100%}
-.tabs button{border:0;background:none;color:var(--mute)}
-.tabs button.on{background:#2c3037;color:var(--ink)}
-.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px}
-.slot{border:2px solid var(--line);border-radius:12px;padding:12px;background:#1b1d22}
-.slot.on{border-color:var(--c)}
-.slot h3{margin:0 0 4px;font-size:17px;display:flex;align-items:center;gap:8px}
-.slot h3 i{width:16px;height:16px;border-radius:50%;background:var(--c)}
-.slot small{display:block;color:var(--mute);font-size:13px;min-height:40px}
-.slot button{width:100%;margin-top:8px}
-.slot .tb{background:var(--t);color:#111;font-weight:700;border-color:transparent}
-button,select,input{font:inherit;font-size:16px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#2c3037;color:var(--ink);padding:0 14px}
-button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
-input{background:#16181c;width:100%}
-input#code{text-transform:uppercase;letter-spacing:3px;font-weight:700;width:7.5em}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--p2);outline-offset:2px}
-button.go{background:var(--p0);border-color:var(--p0);color:#fff;font:400 18px Bungee,sans-serif;padding:0 26px}
-button.go:hover:not(:disabled){filter:brightness(1.1)}
-.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:clamp(16px,2.6vw,26px);width:min(940px,100%);margin:auto;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.card h2{font:700 clamp(20px,2.4vw,24px)/1.2 Sora,sans-serif;margin:0 0 4px;letter-spacing:-.01em}
+.lead{margin:0 0 18px;color:var(--mute);font-size:14px;max-width:64ch}
+.sec{font:600 12px Inter,sans-serif;color:var(--mute);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.box{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.stack{display:grid;gap:14px}
+/* tabs */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 20px;background:var(--field);padding:4px;border-radius:12px;border:1px solid var(--line);max-width:420px}
+.tabs button{border:0;background:none;color:var(--mute);font-weight:600;min-height:40px}
+.tabs button.on{background:linear-gradient(180deg,#262b36,#1e222b);color:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 4px 12px rgba(0,0,0,.3)}
+/* controls */
+button,select,input{font:inherit;font-size:15px;min-height:44px;border-radius:var(--r2);border:1px solid var(--line2);background:#1c2029;color:var(--ink);padding:0 14px;transition:background .15s,border-color .15s,transform .1s}
+button{cursor:pointer;font-weight:600}button:hover:not(:disabled){background:#242936}button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.4;cursor:not-allowed}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239aa1ad' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;width:100%}
+input{background:var(--field);width:100%}
+input::placeholder{color:var(--dim)}
+input#code{text-transform:uppercase;letter-spacing:.3em;font:700 16px Sora,sans-serif;text-align:center}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button.go{background:linear-gradient(180deg,var(--accent2),var(--accent));border-color:transparent;color:#fff;font:700 15px Sora,sans-serif;padding:0 22px;box-shadow:0 8px 22px rgba(255,46,126,.28)}
+button.go:hover:not(:disabled){filter:brightness(1.08);background:linear-gradient(180deg,var(--accent2),var(--accent))}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.f{display:grid;gap:6px;font-size:13px;color:var(--mute);font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .row label{display:flex;gap:8px;align-items:center;color:var(--mute)}
-.sw{display:flex;flex-wrap:wrap;gap:6px}
-.sw button{width:44px;padding:0;background:var(--c);border:3px solid transparent}
-.sw button.on{border-color:var(--ink);box-shadow:0 0 0 2px #000 inset}
-.rooms{list-style:none;padding:0;margin:0;display:grid;gap:6px}
-.rooms li{display:flex;align-items:center;gap:12px;background:#1b1d22;border-radius:10px;padding:6px 6px 6px 14px}
-.rooms li b{font:400 18px Bungee,sans-serif;letter-spacing:2px}
-.rooms li span{color:var(--mute);font-size:14px;margin-right:auto;display:flex;flex-direction:column;line-height:1.35}.rooms li span em{font-style:normal;color:var(--ink);font-size:13px;opacity:.8;overflow-wrap:anywhere}
-.rooms li b{min-width:4.2em}
-.rooms .empty{color:var(--mute);font-size:14px;background:none;padding:0}
-.status{font-size:14px;color:var(--mute);margin:12px 0 0;display:flex;gap:8px;align-items:center}
-.status i{width:10px;height:10px;border-radius:50%;background:#666;flex:none}
-.status.ok i{background:#2ee87a}.status.bad i{background:#ff5a5a}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;margin-top:16px}
+.actions .hint{margin-right:auto;color:var(--dim);font-size:13px}
+.joinrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+/* local slots */
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:18px}
+.slot{border:1px solid var(--line);border-radius:var(--r);padding:12px;background:var(--panel2);display:grid;gap:8px;transition:border-color .15s,box-shadow .15s}
+.slot.on{border-color:color-mix(in srgb,var(--c) 55%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 25%,transparent) inset}
+.slot h3{margin:0;font:700 15px Sora,sans-serif;display:flex;align-items:center;gap:10px}
+.slot h3 i{width:22px;height:22px;border-radius:50%;background:var(--c);box-shadow:0 0 14px var(--c),inset 0 -3px 0 rgba(0,0,0,.25)}
+.slot small{display:block;color:var(--mute);font-size:12.5px;min-height:38px;line-height:1.45}
+.slot button{width:100%;min-height:40px;font-size:14px}
+.slot .tb{background:color-mix(in srgb,var(--t) 18%,#1c2029);border-color:color-mix(in srgb,var(--t) 45%,transparent);color:var(--ink)}
+/* swatches */
+.sw{display:flex;flex-wrap:wrap;gap:8px}
+.sw button{width:40px;min-height:40px;padding:0;border-radius:50%;background:var(--c);border:2px solid transparent;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+.sw button:hover:not(:disabled){background:var(--c);filter:brightness(1.1)}
+.sw button.on{border-color:var(--ink);box-shadow:0 0 0 3px rgba(255,255,255,.14),0 0 16px var(--c)}
+/* room list */
+.rooms{list-style:none;padding:0;margin:0;display:grid;gap:6px;max-height:260px;overflow:auto}
+.rooms li{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 14px}
+.rooms li b{font:700 16px Sora,sans-serif;letter-spacing:.14em;min-width:4.6em}
+.rooms li span{color:var(--mute);font-size:13px;margin-right:auto;display:flex;flex-direction:column;line-height:1.35}
+.rooms li span em{font-style:normal;color:var(--ink);font-size:12.5px;opacity:.75;overflow-wrap:anywhere}
+.rooms li button{min-height:38px;font-size:14px}
+.rooms .empty{color:var(--dim);font-size:13px;background:none;border:1px dashed var(--line2);justify-content:center;padding:16px;text-align:center}
+.status{font-size:13px;color:var(--mute);margin:10px 0 0;display:flex;gap:8px;align-items:center}
+.status i{width:8px;height:8px;border-radius:50%;background:#666;flex:none}
+.status.ok i{background:var(--ok);box-shadow:0 0 10px var(--ok)}.status.bad i{background:var(--bad);box-shadow:0 0 10px var(--bad)}.status.bad{color:#ffb4b4}
+/* invite */
+.invite{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:linear-gradient(90deg,rgba(255,46,126,.16),rgba(255,46,126,.04));border:1px solid rgba(255,46,126,.45);border-radius:var(--r);padding:12px 14px;margin-bottom:18px}
+.invite b{display:block;font-size:15px}.invite span{color:var(--mute);font-size:13px}.invite b span{color:var(--ink);font:700 16px Sora,sans-serif;letter-spacing:.14em}
+/* end / pause */
+.mini{width:min(440px,100%);text-align:center}
+.mini .row{justify-content:center}
+.code-badge{display:inline-block;font:700 18px Sora,sans-serif;letter-spacing:.16em;background:var(--field);border:1px solid var(--line2);border-radius:10px;padding:4px 12px;margin-left:6px;color:var(--ink)}
 .rank{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:6px}
-.rank li{display:flex;gap:12px;align-items:center;background:#1b1d22;border-radius:10px;padding:10px 14px}
-.rank li i{width:18px;height:18px;border-radius:50%}
-.rank li span{margin-left:auto;color:var(--mute);font-size:14px;white-space:nowrap}
-.rank li b{font:400 18px Bungee,sans-serif;width:28px}
-.help{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 20px;color:var(--mute);font-size:14px}
-kbd{font:500 13px Rubik,sans-serif;background:#2c3037;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--ink)}
-.note{font-size:13px;color:var(--mute);margin:12px 0 0}
-.roombar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0 0;color:var(--mute);font-size:14px}
-.roombar b{font:400 18px Bungee,sans-serif;color:var(--ink);letter-spacing:2px}
-.roombar button{min-height:36px;font-size:14px}
-.pus{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:14px;color:var(--mute)}
-.pus span{display:flex;align-items:center;gap:6px}.pus i{width:14px;height:14px;border-radius:4px;background:var(--c);transform:rotate(45deg)}
+.rank li{display:flex;gap:12px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:600}
+.rank li:first-child{border-color:rgba(255,212,0,.45);background:linear-gradient(90deg,rgba(255,212,0,.10),transparent)}
+.rank li i{width:16px;height:16px;border-radius:50%;flex:none}
+.rank li span{margin-left:auto;color:var(--mute);font-size:13px;font-weight:500;text-align:right}
+.rank li b{font:700 15px Sora,sans-serif;width:24px;color:var(--mute)}
+/* help */
+details.help{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+details.help summary{cursor:pointer;color:var(--mute);font-size:13px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px;min-height:32px}
+details.help summary::-webkit-details-marker{display:none}
+details.help summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(-45deg);transition:transform .15s}
+details.help[open] summary::before{transform:rotate(45deg)}
+.helpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px 20px;color:var(--mute);font-size:13px;margin-top:8px}
+kbd{font:600 12px Inter,sans-serif;background:#232834;border:1px solid var(--line2);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--ink)}
+.pus{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 18px;margin-top:10px;font-size:13px;color:var(--mute)}
+.pus span{display:flex;align-items:center;gap:8px}.pus i{width:12px;height:12px;border-radius:3px;background:var(--c);transform:rotate(45deg);box-shadow:0 0 10px var(--c);flex:none}
+.note{font-size:12.5px;color:var(--dim);margin:12px 0 0}
+.chk{display:flex;gap:10px;align-items:center;color:var(--mute);min-height:40px;cursor:pointer;font-size:14px}
+.chk input{width:18px;min-height:18px;height:18px;accent-color:var(--accent);flex:none}
+.footrow{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:space-between}
+/* room toolbar */
+.roombar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:12px 0 0;padding:8px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);color:var(--mute);font-size:13px}
+.roombar .lbl{padding-left:6px}
+.roombar b{font:700 16px Sora,sans-serif;color:var(--ink);letter-spacing:.14em;background:var(--field);border:1px solid var(--line2);border-radius:8px;padding:3px 10px}
+.roombar button{min-height:36px;font-size:13px;padding:0 12px}
+.roombar #rbInfo{margin-right:auto;padding:0 4px}
+.roombar #leaveBtn{color:#ffb4b4;border-color:rgba(255,90,90,.35)}
+/* touch controls */
 .touchbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;user-select:none;-webkit-user-select:none;touch-action:none}
-.stick{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,#2c3037 0 55%,#22252b 56%);border:2px solid var(--line);position:relative;touch-action:none;flex:none}
-.knob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:var(--p0);box-shadow:0 6px 14px rgba(0,0,0,.5),inset 0 -5px 0 rgba(0,0,0,.25)}
+.stick{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06) 0 54%,rgba(255,255,255,.03) 55%);border:1px solid var(--line2);position:relative;touch-action:none;flex:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.knob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:linear-gradient(180deg,#f4f5f7,#c9ced8);box-shadow:0 8px 18px rgba(0,0,0,.45)}
 .tmid{display:flex;flex-direction:column;gap:8px;align-items:center}
-.tmid button{min-height:40px;font-size:14px}
-.fire{width:130px;height:130px;border-radius:50%;background:var(--p0);border:0;color:#fff;font:400 18px Bungee,sans-serif;box-shadow:0 8px 0 #9e1450,0 12px 20px rgba(0,0,0,.4);touch-action:none;flex:none}
-.fire.on{transform:translateY(5px);box-shadow:0 3px 0 #9e1450}
-.chk{display:flex;gap:8px;align-items:center;color:var(--mute);min-height:44px;cursor:pointer}.chk input{width:22px;min-height:22px;height:22px;accent-color:var(--p0)}
-.invite{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:#2a1520;border:2px solid var(--p0);border-radius:12px;padding:12px 14px;margin-bottom:16px}
-.invite b{display:block;font-size:17px}.invite span{color:var(--mute);font-size:14px}.invite b span{color:var(--ink);font:400 18px Bungee,sans-serif;letter-spacing:2px}
-.stage{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}canvas{touch-action:none}
-.thint{font-size:13px;color:var(--mute);text-align:center;max-width:12em}
+.tmid button{min-height:38px;font-size:13px;background:rgba(28,32,41,.85)}
+.fire{width:128px;height:128px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7aa8,var(--accent) 60%);border:0;color:#fff;font:800 16px Sora,sans-serif;box-shadow:0 10px 26px rgba(255,46,126,.4),inset 0 -6px 0 rgba(0,0,0,.2);touch-action:none;flex:none}
+.fire:hover:not(:disabled){background:radial-gradient(circle at 35% 30%,#ff7aa8,var(--accent) 60%)}
+.fire.on{transform:scale(.94);box-shadow:0 4px 12px rgba(255,46,126,.4),inset 0 -2px 0 rgba(0,0,0,.2)}
+.thint{font-size:12px;color:var(--dim);text-align:center;max-width:12em}
 /* phone play mode: game fills the screen */
 body.pt{overflow:hidden;position:fixed;inset:0;overscroll-behavior:none}
 body.pt header,body.pt .roombar{display:none!important}
 body.pt .wrap{max-width:none;height:100vh;height:100dvh;padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));display:flex;flex-direction:column}
-body.pt .hud{min-height:0;margin-bottom:4px;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-body.pt .chip{padding:2px 10px 2px 4px;font-size:13px;white-space:nowrap;flex:none}body.pt .chip i{width:14px;height:14px}body.pt .chip b{font-size:15px}
-body.pt .timer{font-size:15px}
-body.pt .stage{flex:1;min-height:0;border-radius:8px;box-shadow:none;background:#0e0f12}
-body.pt canvas{width:100%;height:100%;aspect-ratio:auto;object-fit:contain;background:#0e0f12}
+body.pt .hud{min-height:0;margin-bottom:6px;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+body.pt .chip{padding:2px 4px;font-size:12px;white-space:nowrap;flex:none}body.pt .chip i{width:13px;height:13px}body.pt .chip b{font-size:13px;padding:1px 7px;min-width:24px}
+body.pt .timer{font-size:12px;padding:4px 10px}
+body.pt .stage{display:block;flex:1;min-height:0;border-radius:12px;box-shadow:none;background:#0a0b0e}
+body.pt canvas{width:100%;height:100%;aspect-ratio:auto;object-fit:contain;background:#0a0b0e}
 body.pt .touchbar{margin-top:8px;flex:none}
+body.pt .ov{position:absolute;inset:0}
+body.pt .chip .cnt{display:none}
 @media(orientation:landscape){
- body.pt .touchbar{position:fixed;left:0;right:0;bottom:0;margin:0;padding:0 max(14px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));pointer-events:none;align-items:flex-end}
+ body.pt .touchbar{position:fixed;left:0;right:0;bottom:0;margin:0;padding:0 max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));pointer-events:none;align-items:flex-end}
  body.pt .touchbar>*{pointer-events:auto}
- body.pt .stick{opacity:.55;background:radial-gradient(circle,rgba(255,255,255,.12) 0 55%,rgba(255,255,255,.06) 56%)}
- body.pt .fire{opacity:.75}
+ body.pt .stick{opacity:.7}
+ body.pt .fire{opacity:.82}
  body.pt .tmid{flex-direction:row;align-self:flex-start;position:fixed;top:max(6px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right))}
- body.pt .tmid button{min-height:34px;padding:0 10px;opacity:.8}
+ body.pt .tmid button{min-height:32px;padding:0 10px;opacity:.9}
  body.pt .thint{display:none}
+ body.pt .hud{padding-right:min(260px,40vw)}
 }
-@media(max-width:700px){.ov{position:fixed;z-index:20}.stick{width:130px;height:130px}.fire{width:112px;height:112px}}
+@media(max-width:700px){.ov{position:fixed;inset:0;z-index:20;align-items:flex-start}.stick{width:128px;height:128px}.fire{width:110px;height:110px}.card{border-radius:16px}}
+@media(max-width:520px){.slots{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.slot{padding:10px}.slot small{font-size:12px}.slot h3{font-size:14px}.brand p{display:none}.actions{justify-content:stretch}.actions .go{flex:1}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Paint<span>ball</span> Arena</h1>
-    <p>Tembak-tembakan cat. Main bareng di satu layar, atau buat room dan ajak teman online.</p>
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2e7e"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient></defs>
+      <rect width="48" height="48" rx="13" fill="#161a22"/>
+      <path d="M24 10c3 0 4 3 6.5 3.5s5-1.5 6.5.5-1 4.5 0 7 4 3.5 3 6-4 1.5-5.5 3.5-.5 5.5-3 6.5-4-2-7.5-2-5 3-7.5 2-1-4.5-3-6.5-5.5-1-6-3.5 3-3.5 3-6-2.5-5-1-7 4.5 0 6.5-1S21 10 24 10z" fill="url(#lg)"/>
+      <circle cx="38" cy="38" r="2.6" fill="#ff7a1a"/><circle cx="10.5" cy="36" r="1.8" fill="#ff2e7e"/><circle cx="20" cy="22" r="4" fill="#fff" opacity=".35"/>
+    </svg>
+    <div class="brand">
+      <h1>Paintball <span>Arena</span></h1>
+      <p>Tembak-tembakan cat. Main di satu layar, atau buat room dan ajak teman online.</p>
+    </div>
   </header>
   <div class="hud" id="hud"></div>
   <div class="stage">
@@ -132,65 +192,87 @@ body.pt .touchbar{margin-top:8px;flex:none}
           <button id="tabLocal" class="on" role="tab">Main lokal</button>
           <button id="tabOnline" role="tab">Main online</button>
         </div>
+
         <div class="pane" id="paneLocal">
           <h2>Siapkan regu</h2>
-          <p>Klik tombol atas tiap slot untuk mengganti Kosong → Pemain → Bot, dan tombol warna untuk memilih tim. Gamepad ke-1 dipakai pemain manusia pertama, dan seterusnya.</p>
+          <p class="lead">Atur tiap slot: Kosong, Pemain, atau Bot, lalu pilih timnya. Gamepad ke-1 dipakai pemain manusia pertama, dan seterusnya.</p>
+          <div class="sec">Pemain</div>
           <div class="slots" id="slots"></div>
-          <div class="row">
-            <label>Mode <select id="teams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label>
-            <label>Skor menang <select id="target"><option>10</option><option selected>15</option><option>25</option></select></label>
-            <label>Waktu <select id="dur"><option value="120">2 menit</option><option value="180" selected>3 menit</option><option value="300">5 menit</option></select></label>
-            <label>Kecepatan <select id="speed"><option value="0.45">Pelan</option><option value="0.65" selected>Sedang</option><option value="1">Cepat</option></select></label>
-            <label>Bot <select id="skill"><option value="0.6">Santai</option><option value="1" selected>Normal</option><option value="1.4">Jago</option></select></label>
-            <button class="go" id="start">Mulai!</button>
+          <div class="sec">Aturan</div>
+          <div class="fields">
+            <label class="f">Mode<select id="teams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label>
+            <label class="f">Skor menang<select id="target"><option>10</option><option selected>15</option><option>25</option></select></label>
+            <label class="f">Waktu<select id="dur"><option value="120">2 menit</option><option value="180" selected>3 menit</option><option value="300">5 menit</option></select></label>
+            <label class="f">Kecepatan<select id="speed"><option value="0.45">Pelan</option><option value="0.65" selected>Sedang</option><option value="1">Cepat</option></select></label>
+            <label class="f">Bot<select id="skill"><option value="0.6">Santai</option><option value="1" selected>Normal</option><option value="1.4">Jago</option></select></label>
           </div>
+          <div class="actions"><span class="hint">Minimal 2 pemain dari tim berbeda.</span><button class="go" id="start">Mulai main</button></div>
         </div>
+
         <div class="pane" id="paneOnline" hidden>
           <div class="invite" id="invite" hidden><div><b>Kamu diundang ke room <span id="inviteCode"></span></b><span>Isi nama dan pilih tim, lalu tekan Gabung.</span></div><button class="go" id="inviteBtn">Gabung</button></div>
           <h2>Main bareng teman</h2>
-          <p>Buat room, lalu kirim kodenya ke teman. Pemain atau tim pertama yang dapat 15 tembakan kena memenangkan ronde, lalu ronde baru mulai otomatis.</p>
-          <div class="row" style="margin-bottom:12px"><label>Mode room baru <select id="onTeams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label>
-            <label>Maks pemain <select id="onMax"><option>2</option><option selected>4</option><option>6</option><option>8</option></select></label>
-            <label class="chk" style="min-height:44px"><input type="checkbox" id="onPrivate"> Room privat (tidak tampil di daftar)</label></div>
-          <div class="row">
-            <label style="flex:1 1 220px">Nama <input id="nick" maxlength="14" autocomplete="off"></label>
-            <div><div id="swLabel" style="color:var(--mute);font-size:14px;margin-bottom:4px">Warna</div><div class="sw" id="sw" aria-label="Warna cat"></div></div>
+          <p class="lead">Pemain atau tim pertama yang mencapai 15 tembakan kena memenangkan ronde, lalu ronde baru mulai otomatis.</p>
+          <div class="grid2">
+            <div class="stack">
+              <div class="box">
+                <div class="sec">Profil kamu</div>
+                <div class="stack" style="gap:12px">
+                  <label class="f">Nama<input id="nick" maxlength="14" autocomplete="off" placeholder="Nama kamu"></label>
+                  <div class="f"><span id="swLabel">Warna</span><div class="sw" id="sw" aria-label="Warna cat"></div></div>
+                </div>
+              </div>
+              <div class="box">
+                <div class="sec">Buat room baru</div>
+                <div class="fields">
+                  <label class="f">Mode<select id="onTeams"><option value="0">Bebas (sendiri-sendiri)</option><option value="2" selected>2 tim</option><option value="3">3 tim</option><option value="4">4 tim</option></select></label>
+                  <label class="f">Maks pemain<select id="onMax"><option>2</option><option selected>4</option><option>6</option><option>8</option></select></label>
+                </div>
+                <div class="footrow" style="margin-top:10px">
+                  <label class="chk"><input type="checkbox" id="onPrivate"> Room privat</label>
+                  <button class="go" id="create" disabled>Buat room</button>
+                </div>
+              </div>
+            </div>
+            <div class="box">
+              <div class="sec">Gabung ke room</div>
+              <div class="joinrow"><input id="code" maxlength="4" placeholder="KODE" autocomplete="off" aria-label="Kode room"><button id="joinBtn" disabled>Gabung</button></div>
+              <div class="status" id="netStatus"><i></i><span>Menghubungkan…</span></div>
+              <div id="roomsBox" style="margin-top:14px"><div class="sec">Room yang sedang main</div>
+                <ul class="rooms" id="rooms"><li class="empty">Mencari room…</li></ul></div>
+              <p class="note" id="onlineNote">Teman perlu membuka halaman ini di claude.ai dalam keadaan login. Bagikan lewat tombol Share dan undang mereka; tautan publik tidak bisa ikut main online.</p>
+            </div>
           </div>
-          <div class="row" style="margin-top:14px">
-            <button class="go" id="create" disabled>Buat room</button>
-            <label>atau kode <input id="code" maxlength="4" placeholder="ABCD" autocomplete="off"></label>
-            <button id="joinBtn" disabled>Gabung</button>
+        </div>
+
+        <details class="help">
+          <summary>Cara main, kontrol, dan power-up</summary>
+          <div class="helpgrid">
+            <div>Bidik mengikuti arah jalan. Peluru terisi ulang otomatis.</div>
+            <div>Online: <kbd>WASD</kbd> atau panah, tembak <kbd>Spasi</kbd> <kbd>F</kbd> <kbd>Enter</kbd>.</div>
+            <div><kbd>Esc</kbd> atau <kbd>P</kbd> membuka menu.</div>
           </div>
-          <div class="status" id="netStatus"><i></i><span>Menghubungkan…</span></div>
-          <div id="roomsBox"><h3>Pilih room yang sedang main</h3>
-          <ul class="rooms" id="rooms"><li class="empty">Mencari room…</li></ul></div>
-          <p class="note" id="onlineNote">Teman perlu membuka halaman ini di claude.ai dalam keadaan login. Bagikan lewat tombol Share dan undang mereka; tautan publik tidak bisa ikut main online.</p>
-        </div>
-        <div class="help">
-          <div>Bidik mengikuti arah jalan. Peluru isi ulang otomatis.</div>
-          <div>Online: <kbd>WASD</kbd> atau panah, <kbd>Spasi</kbd>/<kbd>F</kbd>/<kbd>Enter</kbd> tembak.</div>
-          <div><kbd>Esc</kbd> atau <kbd>P</kbd> untuk menu.</div>
-        </div>
-        <div class="pus" aria-label="Power-up">
-          <span><i style="--c:#19e0e0"></i>Lari kencang</span><span><i style="--c:#ff7a1a"></i>Tembak cepat, peluru tak habis</span>
-          <span><i style="--c:#f2efe8"></i>Perisai, tahan 1 tembakan</span><span><i style="--c:#b45cff"></i>Tembak sebar 3 arah</span>
-        </div>
-        <label class="chk"><input type="checkbox" id="touchOn"> Tampilkan tombol layar sentuh (untuk HP/tablet)</label>
+          <div class="pus" aria-label="Power-up">
+            <span><i style="--c:#19e0e0"></i>Lari kencang</span><span><i style="--c:#ff7a1a"></i>Tembak cepat, peluru tak habis</span>
+            <span><i style="--c:#f2efe8"></i>Perisai, tahan 1 tembakan</span><span><i style="--c:#b45cff"></i>Tembak sebar 3 arah</span>
+          </div>
+        </details>
+        <label class="chk" style="margin-top:6px"><input type="checkbox" id="touchOn"> Tombol layar sentuh (HP/tablet)</label>
       </div>
     </div>
     <div class="ov" id="pause" hidden>
-      <div class="card" style="width:min(420px,100%);text-align:center">
-        <h2 id="pauseTitle">Jeda</h2><p id="pauseText">Tarik napas dulu.</p>
-        <p id="pauseRoom" hidden style="margin:-6px 0 14px">Kode room <b id="pauseCode" style="font:400 20px Bungee,sans-serif;letter-spacing:2px;color:var(--ink)"></b></p>
-        <div class="row" style="justify-content:center;margin-bottom:10px"><button id="pauseLink" hidden>Salin tautan undangan</button><button id="pauseTeam" hidden>Ganti tim</button></div>
-        <div class="row" style="justify-content:center"><button class="go" id="resume">Lanjut</button><button id="quit">Ke lobi</button></div>
+      <div class="card mini">
+        <h2 id="pauseTitle">Jeda</h2><p class="lead" id="pauseText" style="margin-inline:auto">Tarik napas dulu.</p>
+        <p id="pauseRoom" hidden style="margin:-6px 0 16px;color:var(--mute)">Kode room<b id="pauseCode" class="code-badge"></b></p>
+        <div class="row" style="margin-bottom:10px"><button id="pauseLink" hidden>Salin tautan undangan</button><button id="pauseTeam" hidden>Ganti tim</button></div>
+        <div class="row"><button class="go" id="resume">Lanjut</button><button id="quit">Ke lobi</button></div>
       </div>
     </div>
     <div class="ov" id="end" hidden>
-      <div class="card" style="width:min(520px,100%)">
-        <h2 id="winner">Pemenang</h2><p id="endwhy"></p>
+      <div class="card mini" style="text-align:left;width:min(520px,100%)">
+        <h2 id="winner">Pemenang</h2><p class="lead" id="endwhy"></p>
         <ol class="rank" id="rank"></ol>
-        <div class="row"><button class="go" id="again">Main lagi</button><button id="tolobby">Ubah pemain</button></div>
+        <div class="actions"><button id="tolobby">Ubah pemain</button><button class="go" id="again">Main lagi</button></div>
       </div>
     </div>
   </div>
@@ -200,7 +282,7 @@ body.pt .touchbar{margin-top:8px;flex:none}
     <button class="fire" id="fireBtn">Tembak</button>
   </div>
   <div class="roombar" id="roombar" hidden>
-    Room <b id="rbCode"></b><button id="copyCode">Salin kode</button><button id="copyLink" hidden>Salin tautan undangan</button><button id="teamBtn" hidden>Ganti tim</button><span id="rbInfo"></span><button id="leaveBtn">Keluar room</button>
+    <span class="lbl">Room</span><b id="rbCode"></b><button id="copyCode">Salin kode</button><button id="copyLink" hidden>Salin tautan undangan</button><span id="rbInfo"></span><button id="teamBtn" hidden>Ganti tim</button><button id="leaveBtn">Keluar room</button>
   </div>
 </div>
 <script src="https://unpkg.com/mqtt@5.14.0/dist/mqtt.min.js"></script>
@@ -259,7 +341,7 @@ function drawPups(){const t=performance.now()/1000;for(const u of pups){const d=
  else if(d.k==='shd'){ctx.moveTo(0,-10);ctx.lineTo(8,-6);ctx.quadraticCurveTo(8,6,0,11);ctx.quadraticCurveTo(-8,6,-8,-6);ctx.closePath();ctx.fill()}
  else{for(const a of [-.5,0,.5]){ctx.moveTo(-6,6);ctx.lineTo(-6+Math.sin(a)*16,6-Math.cos(a)*16)}ctx.stroke()}
  ctx.restore()}
- for(const q of texts){ctx.globalAlpha=Math.min(1,q.life*2);ctx.font='700 '+Math.round(15*UI)+'px Rubik';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(q.t,q.x+1,q.y+1);ctx.fillStyle=q.col;ctx.fillText(q.t,q.x,q.y)}ctx.globalAlpha=1}
+ for(const q of texts){ctx.globalAlpha=Math.min(1,q.life*2);ctx.font='700 '+Math.round(15*UI)+'px Inter, sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(q.t,q.x+1,q.y+1);ctx.fillStyle=q.col;ctx.fillText(q.t,q.x,q.y)}ctx.globalAlpha=1}
 const isEnemy=(a,b)=>!(teamCount>0&&a.team>=0&&a.team===b.team);
 function teamScores(){const t=[];for(let i=0;i<teamCount;i++)t.push({i,name:'Tim '+NAMES[i],col:COLORS[i],score:0,deaths:0,n:0,members:[]});
  for(const p of players)if(p.team>=0&&t[p.team]){const x=t[p.team];x.score+=p.score|0;x.deaths+=p.deaths|0;x.n++;x.members.push(p)}return t}
@@ -616,7 +698,7 @@ function drawObs(){for(const o of OBS){ctx.fillStyle='rgba(0,0,0,.4)';rrect(ctx,
  ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=2;rrect(ctx,o.x+2,o.y+2,o.w-4,o.h-4,10);ctx.stroke()}}
 const shadeCache={};function shadeOf(c){if(shadeCache[c])return shadeCache[c];const n=parseInt(c.slice(1),16),r=(n>>16)*.45|0,g=(n>>8&255)*.45|0,b=(n&255)*.45|0;return shadeCache[c]=`rgb(${r},${g},${b})`}
 function drawPlayer(p){if(p.x<0)return;
- if(p.dead>0){if(!p.remote){ctx.globalAlpha=.6;ctx.fillStyle='#f2efe8';ctx.font='500 '+Math.round(15*UI)+'px Rubik';ctx.textAlign='center';ctx.fillText(Math.ceil(p.dead)+'',p.x,p.y+5);ctx.globalAlpha=1}return}
+ if(p.dead>0){if(!p.remote){ctx.globalAlpha=.6;ctx.fillStyle='#f2efe8';ctx.font='700 '+Math.round(15*UI)+'px Sora, sans-serif';ctx.textAlign='center';ctx.fillText(Math.ceil(p.dead)+'',p.x,p.y+5);ctx.globalAlpha=1}return}
  if(p.inv>0&&Math.floor(performance.now()/100)%2)ctx.globalAlpha=.45;
  ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(p.x+3,p.y+7,R,R*.8,0,0,7);ctx.fill();
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.ang);
@@ -630,7 +712,10 @@ function drawPlayer(p){if(p.x<0)return;
  if(fb&1){ctx.fillStyle='rgba(25,224,224,.35)';ctx.beginPath();ctx.arc(p.x-Math.cos(p.ang)*14,p.y-Math.sin(p.ang)*14,R*.8,0,7);ctx.fill()}
  {let ix=p.x-((fb&2?1:0)+(fb&8?1:0)-1)*6;for(const [bit,c] of [[2,'#ff7a1a'],[8,'#b45cff']])if(fb&bit){ctx.fillStyle=c;ctx.beginPath();ctx.arc(ix,p.y+R+19,4,0,7);ctx.fill();ix+=12}}
  const label=p===me&&mode==='online'?p.name+' (kamu)':p.name;
- {const ly=p.y-R-6-6*UI;ctx.font='500 '+Math.round(13*UI)+'px Rubik';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillText(label,p.x+1,ly+1);ctx.fillStyle='#f2efe8';ctx.fillText(label,p.x,ly)}
+ {const fs=Math.round(12*UI),ly=p.y-R-9-6*UI;ctx.font='600 '+fs+'px Inter, sans-serif';const tw=ctx.measureText(label).width,ph=fs+8,pw=tw+fs+16,px=clamp(p.x-pw/2,4,W-pw-4),py=Math.max(4,ly-fs-1);
+  ctx.fillStyle='rgba(10,12,16,.66)';rrect(ctx,px,py,pw,ph,ph/2);ctx.fill();
+  ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(px+6+fs*.35,py+ph/2,fs*.32,0,7);ctx.fill();
+  ctx.fillStyle='#f4f5f7';ctx.textAlign='left';ctx.fillText(label,px+10+fs*.7,py+fs+1);ctx.textAlign='center'}
  if(!p.remote){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(p.x-18,p.y+R+7,36,4);ctx.fillStyle=p.ammo<1?'#ff5a5a':p.col;ctx.fillRect(p.x-18,p.y+R+7,36*p.ammo/MAXAMMO,4)}}
 function draw(){ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake*30,(Math.random()-.5)*shake*30);
  ctx.drawImage(floor,0,0);drawObs();ctx.drawImage(paint,0,0);
@@ -639,24 +724,32 @@ function draw(){ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake*30,
  for(const q of parts){ctx.globalAlpha=Math.max(0,q.life*2);ctx.fillStyle=q.col;ctx.fillRect(q.x-2,q.y-2,4,4)}ctx.globalAlpha=1;
  ctx.restore();
  if(mode==='online'&&state!=='lobby'){
-  if(remotes.size===0&&roundEndT<=0){const bh=Math.round(56+14*UI);ctx.fillStyle='rgba(14,15,18,.7)';ctx.fillRect(0,0,W,bh);ctx.fillStyle='#f2efe8';ctx.textAlign='center';ctx.font='500 '+Math.round(20*UI)+'px Rubik';
-   ctx.fillText(UI>1.3?'Menunggu teman… kode room '+roomCode.toUpperCase():'Menunggu teman… kirim kode room '+roomCode.toUpperCase()+'. Sambil menunggu, latihan menembak dulu.',W/2,bh/2+7*UI)}
-  if(roundEndT>0&&roundWinner){ctx.fillStyle='rgba(14,15,18,.78)';ctx.fillRect(0,H/2-80,W,160);ctx.textAlign='center';
-   ctx.fillStyle=roundWinner.col;ctx.font='400 52px Bungee, sans-serif';ctx.fillText(roundWinner.name+' menang!',W/2,H/2+5);
-   ctx.fillStyle='#f2efe8';ctx.font='500 20px Rubik';ctx.fillText('Ronde baru dalam '+Math.ceil(roundEndT)+' detik'+(teamCount>0?' · mau ganti tim? sekarang waktunya':''),W/2,H/2+45)}}}
+  if(remotes.size===0&&roundEndT<=0){const fs=Math.round(15*UI);ctx.font='600 '+fs+'px Inter, sans-serif';
+   const t=UI>1.3?'Menunggu teman · kode room '+roomCode.toUpperCase():'Menunggu teman · kirim kode room '+roomCode.toUpperCase()+' · sambil menunggu, latihan menembak dulu';
+   const tw=ctx.measureText(t).width,ph=fs+20,pw=Math.min(W-40,tw+44),px=W/2-pw/2,py=16;
+   ctx.fillStyle='rgba(10,12,16,.74)';rrect(ctx,px,py,pw,ph,ph/2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1.5;ctx.stroke();
+   const pulse=.5+.5*Math.sin(performance.now()/300);ctx.fillStyle=`rgba(255,212,0,${.45+.55*pulse})`;ctx.beginPath();ctx.arc(px+18,py+ph/2,4,0,7);ctx.fill();
+   ctx.fillStyle='#f4f5f7';ctx.textAlign='center';ctx.fillText(t,W/2+8,py+ph/2+fs*.36)}
+  if(roundEndT>0&&roundWinner){const title=roundWinner.name+' menang!',sub='Ronde baru dalam '+Math.ceil(roundEndT)+' detik'+(teamCount>0?' · mau ganti tim? sekarang waktunya':'');
+   ctx.font='800 46px Sora, sans-serif';const t1=ctx.measureText(title).width;ctx.font='500 18px Inter, sans-serif';const t2=ctx.measureText(sub).width;
+   const cw=Math.min(W-60,Math.max(t1,t2)+90),ch=170,cx=W/2-cw/2,cy=H/2-ch/2;
+   ctx.fillStyle='rgba(10,12,16,.84)';rrect(ctx,cx,cy,cw,ch,24);ctx.fill();ctx.strokeStyle=roundWinner.col;ctx.globalAlpha=.55;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;
+   ctx.fillStyle=roundWinner.col;rrect(ctx,W/2-28,cy+22,56,6,3);ctx.fill();
+   ctx.textAlign='center';ctx.fillStyle=roundWinner.col;ctx.font='800 46px Sora, sans-serif';ctx.fillText(title,W/2,cy+88);
+   ctx.fillStyle='#9aa1ad';ctx.font='500 18px Inter, sans-serif';ctx.fillText(sub,W/2,cy+128)}}}
 
 /* ---------- HUD & screens ---------- */
 const hud=$('hud');let hudSig='',lastTimeTxt='';
 function renderHud(){
  if(teamCount>0){const ts=teamScores().filter(t=>t.n);const sig='t|'+ts.map(t=>t.i+':'+t.score+':'+t.n+':'+(me&&me.team)).join('|');if(sig===hudSig){updTimer();return}hudSig=sig;
-  hud.innerHTML=ts.map(t=>`<div class="chip${mode==='online'&&me&&me.team===t.i?' me':''}"><i style="background:${t.col}"></i>${esc(t.name)} · ${t.n} orang<b>${t.score}</b></div>`).join('')+`<div class="timer" id="tm"></div>`;lastTimeTxt='';updTimer();return}
+  hud.innerHTML=ts.map(t=>`<div class="chip${mode==='online'&&me&&me.team===t.i?' me':''}"><i style="background:${t.col}"></i>${esc(t.name)}<span class="cnt"> · ${t.n} orang</span><b>${t.score}</b></div>`).join('')+`<div class="timer" id="tm"></div>`;lastTimeTxt='';updTimer();return}
  const list=mode==='online'?[...players].sort((a,b)=>b.score-a.score):players;
  const sig=mode+'|'+list.map(p=>p.name+p.col+p.score).join('|');if(sig===hudSig){updTimer();return}hudSig=sig;
  hud.innerHTML=list.map(p=>`<div class="chip${p===me&&mode==='online'?' me':''}"><i style="background:${esc(p.col)}"></i>${esc(p===me&&mode==='online'?p.name+' (kamu)':p.name)}<b>${p.score|0}</b></div>`).join('')+`<div class="timer" id="tm"></div>`;lastTimeTxt='';updTimer()}
 function updTimer(){const el=$('tm');if(!el)return;let s;
  if(mode==='online'){s='Ronde '+(round+1);const now=performance.now();let gap=0;for(const rp of remotes.values())gap=Math.max(gap,now-(rp.lastRx||now));if(gap>700)s+=' · sinyal lemah'}else{const t=Math.max(0,Math.ceil(timeLeft));s=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
  if(s!==lastTimeTxt){lastTimeTxt=s;el.textContent=s}}
-function show(id){for(const k of ['lobby','pause','end'])$(k).hidden=k!==id;setTimeout(()=>{try{syncTouch()}catch(_){}},0)}
+function show(id){for(const k of ['lobby','pause','end'])$(k).hidden=k!==id;$('hud').classList.toggle('idle',id==='lobby');setTimeout(()=>{try{syncTouch()}catch(_){}},0)}
 function togglePause(){if(state==='play'){state='pause';
   $('pauseTitle').textContent=mode==='online'?'Menu':'Jeda';$('pauseText').textContent=mode==='online'?'Game tetap berjalan untuk teman-temanmu, dan kamu diam di tempat.':'Tarik napas dulu.';
   $('quit').textContent=mode==='online'?'Keluar room':'Ke lobi';$('pauseRoom').hidden=mode!=='online';$('pauseCode').textContent=roomCode.toUpperCase();
@@ -739,7 +832,7 @@ cv.tabIndex=0;
 function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;
  if(state==='play')update(dt,false);else if(state==='pause'&&mode==='online')update(dt,true);
  draw();requestAnimationFrame(loop)}
-renderSlots();renderSwatches();
+renderSlots();renderSwatches();$('hud').classList.add('idle');
 /* demo scene behind the lobby */
 makePlayers();players.forEach(p=>spawn(p));
 for(let i=0;i<40;i++)splat(80+Math.random()*1040,60+Math.random()*630,COLORS[i%4],5+Math.random()*9);
